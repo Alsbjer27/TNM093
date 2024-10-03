@@ -275,10 +275,13 @@ const volumeRenderingFragmentSource = `#version 300 es
           // 150 is a randomly chosen value to serve as a reference contribution
           const float ReferenceSamplingInterval = 150.0;
           color.a = 1.0 - pow(1.0 - color.a, tIncr * ReferenceSamplingInterval);
-
           //
           //   @TODO: Implement the front-to-back compositing here
           //
+          // Ray samples volume, each sample contributes to final color
+          // Current sample (color.a & color.rgb) blended with accumolated color (result.rgb)
+          // Break when opacity does not contribute
+
             result.rgb = (1.0 - result.a) * color.rgb * color.a  + result.rgb;
             result.a = (1.0 - result.a) * color.a + result.a;
             if (result.a >= 0.99) {
@@ -288,30 +291,39 @@ const volumeRenderingFragmentSource = `#version 300 es
           //
           //   @TODO: Implement the first hitpoint compositing here
           //
-              if(color.a > 0.25){
-                result = color;
-                break;
-              }
+          // Ray looks for sample value where color.a is larger than threshold
+          // Final color is set to that samples color
+
+          if(color.a > 0.25){
+            result = color;
+            break;
+          }
         }
         else if (compositingMethod == CompositingMethodMaximumIntensityProjection) {
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-            if(result.a < color.a){
-                result = color;
-              }
+          // Samples opacity is compared to highest current opacity 
+          // Update if sample opacity is larger than previous
+
+          if(color.a > result.a){
+            result = color;
+          }
         }
       }
-
       // Step further along the ray
       t += tIncr;
     }
-
     // If we get here, the while loop above terminated, so we are done with the ray, so
     // we can return the result
     return result;
   }
 }
+
+
+
+
+
   void main() {
     // Access the entry point texture at our current pixel location to get the entry pos
     vec3 entryCoord = texture(entryPoints, st).rgb;
@@ -473,43 +485,11 @@ function updateTransferFunction(gl, transferFunction) {
   // which get mapped to [0, 1] by OpenGL
   let data = new Uint8Array(256 * 4);
 
-
-  ////////////////////////////////////////////////////////////////////////////////////////
-  /// Beginning of the provided transfer function
-
-  // The provided transfer function that you'll replace with your own solution is a
-  // relatively simple ramp with the first 50 values being set to 0 to reduce the noise in
-  // the image.  The remainder of the ramp is just using different angles for the color
-  // components
-  //const cutoff = 50;
-
-  
-
-  // For now, just create a linear ramp from 0 to 1. We start at the cutoff value and fill
-  // the rest of the array
-  // for (let i = cutoff * 4; i < 256 * 4; i += 4) {
-  //   // convert i into a value [0, 256] and set it
-  //   const it = i / 4;
-  //   data[i] = 2 * it;
-  //   data[i + 1] = it;
-  //   data[i + 2] = 3 * it;
-  //   data[i + 3] = it;
-  // }
-
-  /// End of the provided transfer function
-  ////////////////////////////////////////////////////////////////////////////////////////
-
   // @TODO:  Replace the transfer function specification above with your own transfer
   //         function editor result
-
-  for (let i = 0; i < 256 * 4; i += 4) {
-    // Set RGBA all to 0
-    data[i] = red;
-    data[i + 1] = green;
-    data[i + 2] = blue;
-    data[i + 3] = alpha;
-  }
-
+    data = fillColor("first", data);
+    data = fillColor("second", data);
+    data = fillColor("third", data);
   // Upload the new data to the texture
   console.log(117, "Updating the transfer function texture");
   gl.bindTexture(gl.TEXTURE_2D, transferFunction);
@@ -517,7 +497,24 @@ function updateTransferFunction(gl, transferFunction) {
   RenderingIsDirty = true
 }
 
+function fillColor(order, data){
+    const width = document.getElementById(order +"-width").value*4;
+    const pos = document.getElementById(order +"-position").value;
+    const op = document.getElementById(order +"-opacity").value;
 
+    const color = document.getElementById(order +"-color").value;
+    const r = parseInt(color.substr(1, 2), 16);
+    const g = parseInt(color.substr(3, 2), 16);
+    const b = parseInt(color.substr(5, 2), 16);
+
+    for(let i = pos * 4 - (width*4) / 2; i < pos * 4 + (width * 4) / 2; i += 4){
+      data[i] = data[i] + r;
+      data[i + 1] = data[i + 1] + g;
+      data[i + 2] = data[i + 2] + b;
+      data[i + 3] = data[i + 3] + op;
+    }
+    return data;
+  }
 
 /// Function that renders the bounding box using the provided model and view matrices. The
 /// front-facing triangles are rendered into the framebuffer provided at 'fbFront', the
@@ -1005,30 +1002,6 @@ function postError(msg) {
   document.getElementById("error").innerHTML =
     document.getElementById("error").innerHTML + "<p>" + msg + "</p>";
 }
-
-// ------ Own script code!!! ------//
-
-// Initialize variables to hold values for sliders, start at half of 256
-let red = 128, green = 128, blue = 128, alpha = 128
-
-// Event listener for the sliders
-document.getElementById('red').addEventListener('input', (event) => {red = event.target.value; 
-  updateTransferFunction(gl, transferFunction);
-})
-
-document.getElementById('green').addEventListener('input', (event) => {green = event.target.value; 
-  updateTransferFunction(gl, transferFunction);
-})
-
-document.getElementById('blue').addEventListener('input', (event) => {blue = event.target.value; 
-  updateTransferFunction(gl, transferFunction);
-})
-
-document.getElementById('alpha').addEventListener('input', (event) => {alpha = event.target.value; 
-  updateTransferFunction(gl, transferFunction);
-})
-
-
 </script>
 
 
@@ -1036,24 +1009,28 @@ document.getElementById('alpha').addEventListener('input', (event) => {alpha = e
   <p id="error"></p>
   <canvas id="glCanvas" width="640" height="480"></canvas>
 
-<!-- Transfer Function Sliders UI -->
-<div>
-  <!-- Red component slider -->
-  <label for="red">Red:</label>
-  <input type="range" id="red" name="red" min="0" max="255" value="128">
-
-  <!-- Green component slider -->
-  <label for="green">Green:</label>
-  <input type="range" id="green" name="green" min="0" max="255" value="128">
-
-  <!-- Blue component slider -->
-  <label for="blue">Blue:</label>
-  <input type="range" id="blue" name="blue" min="0" max="255" value="128">
-
-  <!-- Alpha component slider -->
-  <label for="alpha">Alpha:</label>
-  <input type="range" id="alpha" name="alpha" min="0" max="255" value="128">
-</div>
+  <!-- Transfer function -->
+  <!-- Sliders that  -->
+  <div style="margin-left: 50px;">
+    <h2>Change Transfer Function</h2>
+    <!-- First Color -->
+    <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
+    <!-- Second Color -->
+    <div style="margin-top:30px;"></div>
+    <div> <input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position: <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
+    <!-- Third Color -->
+    <div style="margin-top:30px;"></div>
+    <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position: <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
+  </div>
 
   <p>
     Rendering parameters
