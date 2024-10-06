@@ -374,9 +374,20 @@
       out_color = vec4(abs(exitCoord - entryCoord), 1.0);
     }
     else if (renderType == RenderTypeTransferFunction) {
-      // Just render the transfer function into the viewport
+      // Render the transfer function into the viewport
       vec4 c = texture(transferFunction, vec2(st));
-      out_color = vec4(c.rgb, 1.0);
+      // For the upper 80% of the viewport, just render the RGB color
+      if (st.y > 0.2) {
+        out_color = vec4(c.rgb, 1.0);
+        return;
+      }
+      // For the rest, render TF with transparency, over a checkerboard pattern
+      float nCheckers = 20.0;
+      vec2 pos = floor(st * nCheckers);
+      float patternMask = mod(pos.x + mod(pos.y, 2.0), 2.0);
+      vec4 checkerColor = patternMask * vec4(0.7, 0.7, 0.7, 1.0);
+      // Blend checkerboard pattern with TF color
+      out_color = (1.0 - c.a) * checkerColor + c.a * c;
     }
     else if (renderType == RenderTypeVolumeSlice) {
       // Take a central slice of the volume and render it to the screen. This is mainly

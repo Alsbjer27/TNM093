@@ -218,6 +218,9 @@ const volumeRenderingFragmentSource = `#version 300 es
   out vec4 out_color; // The output variable where we will store the final color that we
                       // painstakingly raycasted
 
+
+
+
   /// This function computes the final color for the ray traversal by actually performing
   /// the volume rendering.
   /// @param entryCoord The coordinate where the ray enters the bounding box
@@ -275,6 +278,7 @@ const volumeRenderingFragmentSource = `#version 300 es
           // 150 is a randomly chosen value to serve as a reference contribution
           const float ReferenceSamplingInterval = 150.0;
           color.a = 1.0 - pow(1.0 - color.a, tIncr * ReferenceSamplingInterval);
+
           //
           //   @TODO: Implement the front-to-back compositing here
           //
@@ -282,10 +286,11 @@ const volumeRenderingFragmentSource = `#version 300 es
           // Current sample (color.a & color.rgb) blended with accumolated color (result.rgb)
           // Break when opacity does not contribute
 
-            result.rgb = (1.0 - result.a) * color.rgb * color.a  + result.rgb;
-            result.a = (1.0 - result.a) * color.a + result.a;
-            if (result.a >= 0.99) {
-            break;
+          result.rgb += (1.0 - result.a) * color.rgb * color.a;
+          result.a += (1.0 - result.a) * color.a;
+          if (result.a >= 0.99) {  
+			    break;
+		      }
         }
         else if (compositingMethod == CompositingMethodFirstHitPoint) {
           //
@@ -294,19 +299,18 @@ const volumeRenderingFragmentSource = `#version 300 es
           // Ray looks for sample value where color.a is larger than threshold
           // Final color is set to that samples color
 
-          if(color.a > 0.25){
-            result = color;
-            break;
+          if (color.a > 0.25) {  
+          result = color;
+          break;
           }
         }
         else if (compositingMethod == CompositingMethodMaximumIntensityProjection) {
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-          // Samples opacity is compared to highest current opacity 
+		      // Samples opacity is compared to highest current opacity 
           // Update if sample opacity is larger than previous
-
-          if(color.a > result.a){
+          if (color.a > result.a) {
             result = color;
           }
         }
@@ -318,7 +322,6 @@ const volumeRenderingFragmentSource = `#version 300 es
     // we can return the result
     return result;
   }
-}
 
 
 
@@ -340,7 +343,7 @@ const volumeRenderingFragmentSource = `#version 300 es
     const int RenderTypeVolumeSlice = 5;
     const int RenderTypeVolumeSliceWithTransferFunction = 6;
 
-    // The values that are checked against here have to be synced with the renderVolume
+    // The values that are checked against here have to be synced with the renderVolume 
     if (renderType == RenderTypeVolumeRendering) {
       // Check for an early out. If the entry coordinate is the same as the exit
       // coordinate then our current pixel is missing the volume, so there is no need for
@@ -516,6 +519,7 @@ function fillColor(order, data){
     return data;
   }
 
+  
 /// Function that renders the bounding box using the provided model and view matrices. The
 /// front-facing triangles are rendered into the framebuffer provided at 'fbFront', the
 /// back-facing triangles will be rendered into the 'fbBack' framebuffer using the shader
@@ -822,7 +826,6 @@ async function main() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-
   //
   //   Load the volume data
   //
@@ -1002,35 +1005,103 @@ function postError(msg) {
   document.getElementById("error").innerHTML =
     document.getElementById("error").innerHTML + "<p>" + msg + "</p>";
 }
+
+// Own script to add nodes
+let nodes = [];
+
+function addNode(){
+  const node = {
+    id: nodes.length,
+    color: "#ff0000",
+    opacity: 50,
+    width: 10,
+    position: 50,
+    element: createNodeElement(nodes.length)
+  };
+  nodes.push(node);
+  document.getElementById("nodeEditor").appendChild(node.element);
+}
+
+function createNodeElement(id){
+  const nodeElement = document.createElement('div');
+  nodeElement.className = 'node';
+  nodeElement.style.position = 'absolute';
+  nodeElement.style.left = '50px';
+  nodeElement.style.top = '50px';
+  nodeElement.style.width = '100px';
+  nodeElement.style.height = '100px';
+  nodeElement.style.border = '1px solid #000';
+  nodeElement.innerHTML = `
+    <input type="color" value="#ff0000" onchange="updateNode(${id}, 'color', this.value)">
+    <input type="range" min="0" max="255" value="50" onchange="updateNode(${id}, 'opacity', this.value)">
+    <input type="range" min="0" max="64" value="10" onchange="updateNode(${id}, 'width', this.value)">
+    <input type="range" min="0" max="256" value="50" onchange="updateNode(${id}, 'position', this.value)">
+  `;
+  nodeElement.draggable = true;
+  nodeElement.ondragend = (event) => {
+    nodeElement.style.left = `${event.clientX}px`;
+    nodeElement.style.top = `${event.clientY}px`;
+    updateNode(id, 'position', event.clientX);
+  };
+  return nodeElement;
+}
+
+function updateNode(id, property, value){
+  const node = nodes.find(node => node.id === id);
+  node[property] = value;
+  triggerTransferFunctionUpdate();
+}
+
+nodes.forEach(node => {
+    // Update the transfer function using node properties
+    updateColorStop(node.position, node.color, node.opacity, node.width);
+  });
+  triggerTransferFunctionUpdate();
+
 </script>
 
 
 <body onload="main();">
   <p id="error"></p>
-  <canvas id="glCanvas" width="640" height="480"></canvas>
+  <div style="display: flex;">
+    <canvas id="glCanvas" width="640" height="480" style="margin-right: 10px;"></canvas>
+    <div id="nodeEditor" style="position: relative; width: 640px; height: 480px; border: 1px solid #ccc;">
+      <button onclick="addNode()"> Add Node</button>
+    </div>
+  </div>
+  
 
   <!-- Transfer function -->
   <!-- Sliders that  -->
-  <div style="margin-left: 50px;">
+  <div style="margin-left: 5px;" >
     <h2>Change Transfer Function</h2>
     <!-- First Color -->
-    <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
+     <div style="display: flex;">
+      <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
+     </div>
     <!-- Second Color -->
-    <div style="margin-top:30px;"></div>
-    <div> <input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Position: <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
+    <div style="display: flex;">
+      <div style="margin-top:30px;"></div>
+      <div> <input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position: <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
+    </div>
+    
     <!-- Third Color -->
-    <div style="margin-top:30px;"></div>
-    <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
-    <div> Position: <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
+     <div style="display: flex;">
+      <div style="margin-top:30px;"></div>
+      <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position: <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
+     </div>
   </div>
+
+
 
   <p>
     Rendering parameters
