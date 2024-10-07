@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+Copyright 2013, 2017, Karljohan Lundin Palmerius
+
+This is a stubb for laborations on multi-modal display
+systems in the VR laboratory. It will disable the X3D
+navigation to allow for viewpoint calibration and tracking,
+and load libraries commonly used in the VR laboratory.
+
+-->
+<Group>
+  
+  <PythonScript url="urn:candy:python/CorrectViewpoint.py"/>
+  
+  <PythonScript url="urn:candy:python/AutoLoadSO.py"/>
+
+  <PythonScript DEF="PYCR" url="./ColorRandomizer.py"/>
+      
+  <PythonScript DEF="MFtoSFBool" url="urn:candy:python/MFtoSFBool.py"/>
+
+  <PythonScript DEF="TTT" url="urn:candy:python/TouchTimeTrigger.py"/>
+
+  <!-- Put your code here -->
+    <Group>
+      <Viewpoint position="0 0 1" orientation="0 1 0 0" description="Front View"/>
+      <Viewpoint position="0.6 0.3 0.9" orientation="-1 1 0 0.3" description="Front View Back"/>
+      <SMViewpoint position="0.6 0.3 0.9" screenLowerLeft="-0.259 -0.162 0" screenUpperRight="0.259 0.162 0" description="Front View Back SM"/>
+
+
+<!-- SOUND-->
+<VRSound location="1 0 0" spatialize="true">
+<AudioClip url="./sound/ljud-bon-1.wav" loop="false"/>
+</VRSound>
+
+      <!-- For VR Experiments -->
+      <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
+      <Inline url="urn:candy:x3d/view-untracked-mono.x3d"/>
+      <Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
+      <Inline url="urn:candy:x3d/view-head-tracked-mono.x3d"/>-->
+
+<IMPORT inlineDEF="H3D_EXPORTS" exportedDEF="HDEV" AS="HDEV"/>
+
+<!-- Light above-->
+<PointLight location="0.3 0.5 0.5" ambientIntensity="0.5"/>
+<!-- Light below -->
+<!--<PointLight location="0 -0.5 -0.5" ambientIntensity="0.5"/>-->
+
+<MatrixTransform DEF="GROUP_TRANSFORM">
+<!--FrontLeft-->
+      <Transform translation="-0.05 0 0.1" rotation="0 0 1 0">
+          <Shape>
+            <Appearance shadow="true">
+              <Material DEF="MAT1" diffuseColor="0 1 0" />
+            </Appearance>
+            <Box size="0.01 0.1 0.01"/>
+        </Shape>
+      </Transform>
+
+<!--FrontRight-->
+      <Transform translation="0.05 0 0.1" rotation="0 0 1 0">
+        <Shape>
+            <Appearance shadow="true">
+              <Material DEF="MAT1" diffuseColor="0 1 0" />
+            </Appearance>
+            <Box size="0.01 0.1 0.01"/>
+        </Shape>
+      </Transform>
+
+<!--BackLeft-->
+      <Transform translation="-0.05 0.05 0" rotation="0 0 1 0">
+        <Shape>
+            <Appearance shadow="true">
+              <Material USE="MAT1"/>
+            </Appearance>
+            <Box size="0.01 0.2 0.01"/>
+        </Shape>
+      </Transform>
+
+<!--BackRight-->
+      <Transform translation="0.05 0.05 0" rotation="0 0 1 0">
+          <Shape>
+            <Appearance shadow="true">
+              <Material USE="MAT1"/>
+            </Appearance>
+            <Box size="0.01 0.2 0.01"/>
+        </Shape>
+      </Transform>
+
+<!--Seat-->
+      <Transform translation="0 0.05 0.05" rotation="0 0 1 0">
+          <Shape>
+            <Appearance shadow="true">
+              <Material USE="MAT1"/>
+            </Appearance>
+              <Box DEF="SEAT" size="0.12 0.005 0.12"/>
+          </Shape>
+      </Transform>
+
+<!--Rest-->
+      <Transform translation="0 0.12 0">
+          <Shape>
+            <Appearance shadow="true">
+              <Material DEF="MAT2" diffuseColor="1 0 0"/>
+              <SmoothSurface stiffness="0.4"/>
+            </Appearance>
+              <Box DEF="REST" size="0.1 0.05 0.01"/>
+          </Shape>
+      </Transform>
+    </MatrixTransform>
+
+  <!-- Floor -->
+<Transform translation="0 -0.05 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="1 1 0"/>
+            <ImageTexture url="./GravelTexture.jpg"/>
+            </Appearance>
+            <Box DEF="FLOOR" size="1 0.01 1"/>
+          </Shape>
+      </Transform>
+      <PythonScript
+      DEF="MT"
+      url="urn:candy:python/ManualTranslation.py">
+    <Transform USE="GROUP_TRANSFORM" containerField="references"/>
+  </PythonScript>
+  
+  <PythonScript
+      DEF="MR"
+      url="urn:candy:python/ManualRotation.py">
+    <Transform USE="GROUP_TRANSFORM" containerField="references"/>
+  </PythonScript>
+
+      <ROUTE fromNode="REST" fromField="isTouched" toNode="MFtoSFBool" toField="value"/>
+      <ROUTE fromNode="MFtoSFBool" fromField="value" toNode="PYCR" toField="color"/>
+      <ROUTE fromNode="PYCR" fromField="color" toNode="MAT2" toField="diffuseColor"/>
+
+      <ROUTE fromNode="HDEV" fromField="mainButton" toNode="MT" toField="button"/>
+      <ROUTE fromNode="HDEV" fromField="trackerPosition" toNode="MT" toField="position"/>
+
+      <ROUTE fromNode="HDEV" fromField="mainButton" toNode="MR" toField="button"/>
+      <ROUTE fromNode="HDEV" fromField="trackerPosition" toNode="MR" toField="position"/>
+      <ROUTE fromNode="HDEV" fromField="trackerOrientation" toNode="MR" toField="orientation"/>
+
+
+
+<!--<PythonScript DEF="ROTATOR" url="urn:candy:pthin/Rotator.py">
+  <MetadataFloat name="eulerAxis" value="1 0 0" containerField="references"/>
+  <MetadataFloat name="eulerLimits" value="-1 1" containerField="references"/>
+  <MetadataFloat name="eulerAxis" value="0 1 0" containerField="references"/>
+</PythonScript>-->
+
+    </Group>  
+</Group>
