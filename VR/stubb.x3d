@@ -28,10 +28,23 @@ and load libraries commonly used in the VR laboratory.
       <SMViewpoint position="0.6 0.3 0.9" screenLowerLeft="-0.259 -0.162 0" screenUpperRight="0.259 0.162 0" description="Front View Back SM"/>
 
 
-<!-- SOUND-->
-<VRSound location="1 0 0" spatialize="true">
-<AudioClip url="./sound/ljud-bon-1.wav" loop="false"/>
+<!-- SOUND 1-->
+<VRSound location="1 0 0" spatialize="TRUE">
+<ReverbSoundEffect parametersPreset="SPACESTATION_LARGEROOM" />
+<AudioClip DEF="SOUND1" url="./sound/ljud-bon-1.wav" loop="false"/>
 </VRSound>
+
+<!-- SOUND 2-->
+<!--<VRSound location="1 0 0" spatialize="TRUE">
+<ReverbSoundEffect parametersPreset="MOOD_HELL" />
+<AudioClip DEF="SOUND2" url="./sound/ljud-bon-1.wav" loop="false"/>
+</VRSound>-->
+
+<!-- SOUND 3-->
+<!--<VRSound location="1 0 0" spatialize="TRUE">
+<ReverbSoundEffect parametersPreset="ICEPALACE_HALL" />
+<AudioClip DEF="SOUND2" url="./sound/ljud-bon-1.wav" loop="false"/>
+</VRSound>-->
 
       <!-- For VR Experiments -->
       <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
