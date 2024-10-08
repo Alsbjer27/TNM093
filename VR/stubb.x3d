@@ -18,8 +18,10 @@ and load libraries commonly used in the VR laboratory.
   <PythonScript DEF="PYCR" url="./ColorRandomizer.py"/>
       
   <PythonScript DEF="MFtoSFBool" url="urn:candy:python/MFtoSFBool.py"/>
+  <PythonScript DEF="MFtoSFBool2" url="urn:candy:python/MFtoSFBool.py"/>
 
-  <PythonScript DEF="TTT" url="urn:candy:python/TouchTimeTrigger.py"/>
+
+  <PythonScript DEF="TTTSCRIPT" url="urn:candy:python/TouchTimeTrigger.py"/>
 
   <!-- Put your code here -->
     <Group>
@@ -31,20 +33,23 @@ and load libraries commonly used in the VR laboratory.
 <!-- SOUND 1-->
 <VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="SPACESTATION_LARGEROOM" />
-<AudioClip DEF="SOUND1" url="./sound/ljud-bon-1.wav" loop="false"/>
+<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
 </VRSound>
 
 <!-- SOUND 2-->
 <!--<VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="MOOD_HELL" />
-<AudioClip DEF="SOUND2" url="./sound/ljud-bon-1.wav" loop="false"/>
+<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
 </VRSound>-->
 
 <!-- SOUND 3-->
 <!--<VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="ICEPALACE_HALL" />
-<AudioClip DEF="SOUND2" url="./sound/ljud-bon-1.wav" loop="false"/>
+<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
 </VRSound>-->
+
+<BooleanFilter DEF="BF"/>
+<TimeTrigger DEF="TT"/>
 
       <!-- For VR Experiments -->
       <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
@@ -155,7 +160,10 @@ and load libraries commonly used in the VR laboratory.
       <ROUTE fromNode="HDEV" fromField="trackerPosition" toNode="MR" toField="position"/>
       <ROUTE fromNode="HDEV" fromField="trackerOrientation" toNode="MR" toField="orientation"/>
 
-
+  <ROUTE fromNode='REST' fromField='isTouched' toNode='MFtoSFBool2' toField='value' />
+  <ROUTE fromNode='MFtoSFBool2' fromField='value' toNode='BF' toField='set_boolean' />
+  <ROUTE fromNode='BF' fromField='inputTrue' toNode='TT' toField='set_boolean' />
+  <ROUTE fromNode='TT' fromField='triggerTime' toNode='SOUND' toField='startTime' />
 
 <!--<PythonScript DEF="ROTATOR" url="urn:candy:pthin/Rotator.py">
   <MetadataFloat name="eulerAxis" value="1 0 0" containerField="references"/>
