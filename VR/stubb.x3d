@@ -21,7 +21,7 @@ and load libraries commonly used in the VR laboratory.
   <PythonScript DEF="MFtoSFBool2" url="urn:candy:python/MFtoSFBool.py"/>
 
 
-  <PythonScript DEF="TTTSCRIPT" url="urn:candy:python/TouchTimeTrigger.py"/>
+ <!-- <PythonScript DEF="TTTSCRIPT" url="urn:candy:python/TouchTimeTrigger.py"/> -->
 
   <!-- Put your code here -->
     <Group>
@@ -31,21 +31,21 @@ and load libraries commonly used in the VR laboratory.
 
 
 <!-- SOUND 1-->
-<VRSound location="1 0 0" spatialize="TRUE">
+<!--<VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="SPACESTATION_LARGEROOM" />
-<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
-</VRSound>
+<AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
+</VRSound>-->
 
 <!-- SOUND 2-->
-<!--<VRSound location="1 0 0" spatialize="TRUE">
+<VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="MOOD_HELL" />
-<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
-</VRSound>-->
+<AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
+</VRSound>
 
 <!-- SOUND 3-->
 <!--<VRSound location="1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="ICEPALACE_HALL" />
-<AudioClip DEF="SOUND" url="./sound/ljud-bon-1.wav" loop="false"/>
+<AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
 </VRSound>-->
 
 <BooleanFilter DEF="BF"/>
@@ -55,8 +55,8 @@ and load libraries commonly used in the VR laboratory.
       <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
       <Inline url="urn:candy:x3d/view-untracked-mono.x3d"/>
       <Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
-      <Inline url="urn:candy:x3d/view-head-tracked-mono.x3d"/>-->
-
+      -->
+<Inline url="urn:candy:x3d/view-head-tracked-mono.x3d"/>
 <IMPORT inlineDEF="H3D_EXPORTS" exportedDEF="HDEV" AS="HDEV"/>
 
 <!-- Light above-->
@@ -66,7 +66,7 @@ and load libraries commonly used in the VR laboratory.
 
 <MatrixTransform DEF="GROUP_TRANSFORM">
 <!--FrontLeft-->
-      <Transform translation="-0.05 0 0.1" rotation="0 0 1 0">
+      <Transform translation="-0.05 -0.1 0.1" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
               <Material DEF="MAT1" diffuseColor="0 1 0" />
@@ -76,7 +76,7 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--FrontRight-->
-      <Transform translation="0.05 0 0.1" rotation="0 0 1 0">
+      <Transform translation="0.05 -0.1 0.1" rotation="0 0 1 0">
         <Shape>
             <Appearance shadow="true">
               <Material DEF="MAT1" diffuseColor="0 1 0" />
@@ -86,7 +86,7 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--BackLeft-->
-      <Transform translation="-0.05 0.05 0" rotation="0 0 1 0">
+      <Transform translation="-0.05 -0.05 0" rotation="0 0 1 0">
         <Shape>
             <Appearance shadow="true">
               <Material USE="MAT1"/>
@@ -96,7 +96,7 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--BackRight-->
-      <Transform translation="0.05 0.05 0" rotation="0 0 1 0">
+      <Transform translation="0.05 -0.05 0" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
               <Material USE="MAT1"/>
@@ -106,17 +106,17 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--Seat-->
-      <Transform translation="0 0.05 0.05" rotation="0 0 1 0">
+      <Transform translation="0 -0.05 0.05" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
               <Material USE="MAT1"/>
             </Appearance>
-              <Box DEF="SEAT" size="0.12 0.005 0.12"/>
+              <Box DEF="SEAT" size="0.12 -0.015 0.12"/>
           </Shape>
       </Transform>
 
 <!--Rest-->
-      <Transform translation="0 0.12 0">
+      <Transform translation="0 -0.02 0">
           <Shape>
             <Appearance shadow="true">
               <Material DEF="MAT2" diffuseColor="1 0 0"/>
@@ -128,7 +128,7 @@ and load libraries commonly used in the VR laboratory.
     </MatrixTransform>
 
   <!-- Floor -->
-<Transform translation="0 -0.05 0">
+<Transform translation="0 -0.15 0">
         <Shape>
           <Appearance>
             <Material diffuseColor="1 1 0"/>
