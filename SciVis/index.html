@@ -1,4 +1,4 @@
-<html>
+<html></html>
 
 <!--
   Adding Brandon Jones and Colin MacKenzie IV's gl-matrix library that provides easy to
@@ -218,9 +218,6 @@ const volumeRenderingFragmentSource = `#version 300 es
   out vec4 out_color; // The output variable where we will store the final color that we
                       // painstakingly raycasted
 
-
-
-
   /// This function computes the final color for the ray traversal by actually performing
   /// the volume rendering.
   /// @param entryCoord The coordinate where the ray enters the bounding box
@@ -282,50 +279,40 @@ const volumeRenderingFragmentSource = `#version 300 es
           //
           //   @TODO: Implement the front-to-back compositing here
           //
-          // Ray samples volume, each sample contributes to final color
-          // Current sample (color.a & color.rgb) blended with accumolated color (result.rgb)
-          // Break when opacity does not contribute
-
-          result.rgb += (1.0 - result.a) * color.rgb * color.a;
-          result.a += (1.0 - result.a) * color.a;
-          if (result.a >= 0.99) {  
-			    break;
-		      }
+          // result.rgb holds accumolated color
+          // result.a holds accumolated alpha
+          result.rgb = (1.0 - result.a) * color.rgb * color.a  + result.rgb;
+          result.a = (1.0 - result.a) * color.a + result.a;
         }
         else if (compositingMethod == CompositingMethodFirstHitPoint) {
           //
           //   @TODO: Implement the first hitpoint compositing here
           //
-          // Ray looks for sample value where color.a is larger than threshold
-          // Final color is set to that samples color
-
-          if (color.a > 0.25) {  
-          result = color;
-          break;
+          // change result if current a is larger than the threshold
+          if(color.a > 0.15){
+            result = color;
+            break;
           }
         }
         else if (compositingMethod == CompositingMethodMaximumIntensityProjection) {
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-		      // Samples opacity is compared to highest current opacity 
-          // Update if sample opacity is larger than previous
-          if (color.a > result.a) {
+          // change result if current a is larger
+          if(result.a < color.a){
             result = color;
           }
         }
       }
+
       // Step further along the ray
       t += tIncr;
     }
+
     // If we get here, the while loop above terminated, so we are done with the ray, so
     // we can return the result
     return result;
   }
-
-
-
-
 
   void main() {
     // Access the entry point texture at our current pixel location to get the entry pos
@@ -343,7 +330,7 @@ const volumeRenderingFragmentSource = `#version 300 es
     const int RenderTypeVolumeSlice = 5;
     const int RenderTypeVolumeSliceWithTransferFunction = 6;
 
-    // The values that are checked against here have to be synced with the renderVolume 
+    // The values that are checked against here have to be synced with the renderVolume
     if (renderType == RenderTypeVolumeRendering) {
       // Check for an early out. If the entry coordinate is the same as the exit
       // coordinate then our current pixel is missing the volume, so there is no need for
@@ -490,10 +477,13 @@ function updateTransferFunction(gl, transferFunction) {
 
   // @TODO:  Replace the transfer function specification above with your own transfer
   //         function editor result
+
     data = fillColor("first", data);
     data = fillColor("second", data);
     data = fillColor("third", data);
-  // Upload the new data to the texture
+  
+    // Upload the new data to the texture
+
   console.log(117, "Updating the transfer function texture");
   gl.bindTexture(gl.TEXTURE_2D, transferFunction);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
@@ -501,16 +491,16 @@ function updateTransferFunction(gl, transferFunction) {
 }
 
 function fillColor(order, data){
-    const width = document.getElementById(order +"-width").value*4;
+    const width = document.getElementById(order +"-width").value*4;     // For RGBA, we need to fill 4 values per pixel. The first value is the red channel.
     const pos = document.getElementById(order +"-position").value;
     const op = document.getElementById(order +"-opacity").value;
 
     const color = document.getElementById(order +"-color").value;
-    const r = parseInt(color.substr(1, 2), 16);
+    const r = parseInt(color.substr(1, 2), 16);   // 16 is the base for hexadecimal numbers
     const g = parseInt(color.substr(3, 2), 16);
     const b = parseInt(color.substr(5, 2), 16);
 
-    for(let i = pos * 4 - (width*4) / 2; i < pos * 4 + (width * 4) / 2; i += 4){
+    for(let i = pos * 4 - (width*4) / 2; i < pos * 4 + (width * 4) / 2; i += 4){ // Loop over pixels around the position. Each pixel has 4 values (RGBA).
       data[i] = data[i] + r;
       data[i + 1] = data[i + 1] + g;
       data[i + 2] = data[i + 2] + b;
@@ -1015,33 +1005,6 @@ function postError(msg) {
     <canvas id="glCanvas" width="640" height="480" style="margin-right: 10px;"></canvas>
   </div>
 
-  <!-- Transfer function -->
-  <div style="margin-left: 5px;" >
-    <!-- First Color -->
-     <div style="display: flex; margin-top: 10px;">
-      <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
-     </div>
-    <!-- Second Color -->
-    <div style="display: flex;">
-      <div style="margin-top:30px;"></div>
-      <div> <input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position: <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
-    </div>
-    <!-- Third Color -->
-     <div style="display: flex;">
-      <div style="margin-top:30px;"></div>
-      <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position: <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
-     </div>
-  </div>
-
   <p>
     Rendering parameters
     <div>Step size: <input type="range" min="10" max="10000" value="1000" class="slider" id="stepSize" oninput="triggerRendering();"> </div>
@@ -1073,7 +1036,32 @@ function postError(msg) {
   <!--
     Add some UI elements here to modify the transfer function.  As mentioned above, you need to call the function 'triggerTransferFunctionUpdate' to trigger and update of the GPU representation of the transfer function texture.  If you don't call that function, no change will be visible.
   -->
-
+<!-- Transfer function -->
+<div style="margin-left: 5px;" >
+  <!-- First Color -->
+   <div style="display: flex; margin-top: 10px;">
+    <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
+   </div>
+  <!-- Second Color -->
+  <div style="display: flex;">
+    <div style="margin-top:30px;"></div>
+    <div> <input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position: <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
+  </div>
+  <!-- Third Color -->
+   <div style="display: flex;">
+    <div style="margin-top:30px;"></div>
+    <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
+    <div> Position: <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
+   </div>
+</div>
 
 </body>
 
