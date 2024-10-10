@@ -490,24 +490,61 @@ function updateTransferFunction(gl, transferFunction) {
   RenderingIsDirty = true
 }
 
-function fillColor(order, data){
-    const width = document.getElementById(order +"-width").value*4;     // For RGBA, we need to fill 4 values per pixel. The first value is the red channel.
-    const pos = document.getElementById(order +"-position").value;
-    const op = document.getElementById(order +"-opacity").value;
+function fillColor(order, data) {
+    const width = document.getElementById(order + "-width").value * 4;
+    const pos = document.getElementById(order + "-position").value;
+    const op = parseFloat(document.getElementById(order + "-opacity").value);  // Opacity
+    const cdRange = parseFloat(document.getElementById("cd-range").value) * 4;  // C-D range
+    const color = document.getElementById(order + "-color").value;
 
-    const color = document.getElementById(order +"-color").value;
-    const r = parseInt(color.substr(1, 2), 16);   // 16 is the base for hexadecimal numbers
-    const g = parseInt(color.substr(3, 2), 16);
-    const b = parseInt(color.substr(5, 2), 16);
+    const r = parseInt(color.substr(1, 2), 16);  // Red
+    const g = parseInt(color.substr(3, 2), 16);  // Green
+    const b = parseInt(color.substr(5, 2), 16);  // Blue
 
-    for(let i = pos * 4 - (width*4) / 2; i < pos * 4 + (width * 4) / 2; i += 4){ // Loop over pixels around the position. Each pixel has 4 values (RGBA).
-      data[i] = data[i] + r;
-      data[i + 1] = data[i + 1] + g;
-      data[i + 2] = data[i + 2] + b;
-      data[i + 3] = data[i + 3] + op;
+    // Calculate the fade length and points
+    const fadeLength = Math.max(1, Math.round((width - cdRange) / 2));
+    const a = pos * 4 - width * 4 / 2;  // Start (a)
+    const c = a + fadeLength;           // Fade-in peak (c)
+    const d = c + cdRange;              // Fade-out start (d)
+    const endPos = pos * 4 + width * 4 / 2;   // End (b)
+
+    // Slope for fade-in (kx + m), starting from opacity = 0 to opacity = op
+    const fadeInSlope = op / fadeLength;  // k = op / fadeLength
+
+    // Fade from 0 to full opacity between [a, c]
+    for (let i = a; i < c; i += 4) {
+        const x = i - a;  // Position relative to 'a'
+        const opacity = fadeInSlope * x;  // y = kx + m (m = 0)
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+        data[i + 3] = Math.min(255, Math.round(opacity));  // Cap opacity at 255
     }
+
+    // Full opacity in range [c, d]
+    for (let i = c; i < d; i += 4) {
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+        data[i + 3] = Math.round(op);  // Constant full opacity
+    }
+
+    // Slope for fade-out (kx + m), starting from full opacity to opacity = 0
+    const fadeOutSlope = -op / (endPos - d);  // k = -op / (endPos - d)
+
+    // Fade from full opacity to 0 in range [d, endPos]
+    for (let i = d; i < endPos; i += 4) {
+        const x = i - d;  // Position relative to 'd'
+        const opacity = fadeOutSlope * x + op;  // y = kx + m (m = op)
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+        data[i + 3] = Math.max(0, Math.round(opacity));  // Ensure opacity doesn't go below 0
+    }
+
     return data;
-  }
+}
+
 
   
 /// Function that renders the bounding box using the provided model and view matrices. The

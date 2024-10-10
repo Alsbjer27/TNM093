@@ -37,7 +37,7 @@ and load libraries commonly used in the VR laboratory.
 </VRSound>-->
 
 <!-- SOUND 2-->
-<VRSound location="1 0 0" spatialize="TRUE">
+<VRSound location="-1 0 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="MOOD_HELL" />
 <AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
 </VRSound>
