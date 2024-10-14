@@ -491,11 +491,11 @@ function updateTransferFunction(gl, transferFunction) {
 }
 
 function fillColor(order, data){
-    const width = document.getElementById(order +"-width").value*4;     // For RGBA, we need to fill 4 values per pixel. The first value is the red channel.
+    const width = document.getElementById(order +"-width").value*4;     // For RGBA, we need to fill 4 values per pixel
     const pos = document.getElementById(order +"-position").value;
     const op = document.getElementById(order +"-opacity").value;
-
     const color = document.getElementById(order +"-color").value;
+    
     const r = parseInt(color.substr(1, 2), 16);   // 16 is the base for hexadecimal numbers
     const g = parseInt(color.substr(3, 2), 16);
     const b = parseInt(color.substr(5, 2), 16);

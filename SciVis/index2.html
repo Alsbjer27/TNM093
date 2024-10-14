@@ -1,5 +1,5 @@
 <html></html>
-
+<meta charset="utf-8">
 <!--
   Adding Brandon Jones and Colin MacKenzie IV's gl-matrix library that provides easy to
   use vector and matrix maths operations.  Source: https://github.com/toji/gl-matrix
@@ -9,67 +9,67 @@
 <!-- Main WebGL functions -->
 <script type="text/javascript">
 
-//
-//   Space for some global variables
-//
-// This variable stores whether the image that is currently on screen is correct or not.
-// The volume rendering is only triggered if this value is set to 'true' in order to save
-// computational resources that would be wasted recreating the same image over and over
-// again.  This value is set to true by any user input that modifies the rendering
-let RenderingIsDirty = true;
-let TransferFunctionIsDirty = true;
+  //
+  //   Space for some global variables
+  //
+  // This variable stores whether the image that is currently on screen is correct or not.
+  // The volume rendering is only triggered if this value is set to 'true' in order to save
+  // computational resources that would be wasted recreating the same image over and over
+  // again.  This value is set to true by any user input that modifies the rendering
+  let RenderingIsDirty = true;
+  let TransferFunctionIsDirty = true;
 
 
 
-//
-//   Shader codes
-//
+  //
+  //   Shader codes
+  //
 
-// OBS:  For all shaders, "#version 300 es" has to be the first token in the source, so
-//
-// var vertexSource = `
-// #version 300 es
-//
-// would not work as there is a \n after `
-//
+  // OBS:  For all shaders, "#version 300 es" has to be the first token in the source, so
+  //
+  // var vertexSource = `
+  // #version 300 es
+  // 
+  // would not work as there is a \n after `
+  //
 
 
-// The vertex shader contains hardcorded positions for a generic bounding box.  The box is
-// created as a unit cube from -1 to 1.  The box will then be scaled to the correct size
-// and proportions using the model matrix in case we are looking at a  non-cube dataset.
-// We are building a cube as a bounding box:
-//
-//           7---------------------6
-//          /|                    /|
-//         / |                   / |
-//        /  |                  /  |
-//       /   |                 /   |
-//      3----+----------------2    |
-//      |    |                |    |
-//      |    |                |    |
-//      |    4----------------+----5
-//      |   /                 |   /
-//      |  /                  |  /
-//      | /                   | /
-//      |/                    |/
-//      0---------------------1
-//
-//  y
-//  ^
-//  |  z
-//  | /
-//  |/
-//  o-----> x
-//
-// So we are generating the triangles:
-// (0, 2, 1), (0, 3, 2)  for the front side
-// (1, 6, 5), (1, 2, 6)  for the right side
-// (4, 3, 0), (4, 7, 3)  for the left side
-// (4, 6, 7), (4, 5, 6)  for the back side
-// (3, 6, 2), (3, 7, 6)  for the top side
-// (1, 4, 0), (1, 5, 4)  for the bottom side
+  // The vertex shader contains hardcorded positions for a generic bounding box.  The box is
+  // created as a unit cube from -1 to 1.  The box will then be scaled to the correct size
+  // and proportions using the model matrix in case we are looking at a  non-cube dataset.
+  // We are building a cube as a bounding box:
+  //
+  //           7---------------------6
+  //          /|                    /|
+  //         / |                   / |
+  //        /  |                  /  |
+  //       /   |                 /   |
+  //      3----+----------------2    |
+  //      |    |                |    |
+  //      |    |                |    |
+  //      |    4----------------+----5
+  //      |   /                 |   /
+  //      |  /                  |  /
+  //      | /                   | /
+  //      |/                    |/
+  //      0---------------------1
+  //
+  //  y
+  //  ^
+  //  |  z
+  //  | /
+  //  |/
+  //  o-----> x
+  //
+  // So we are generating the triangles:
+  // (0, 2, 1), (0, 3, 2)  for the front side
+  // (1, 6, 5), (1, 2, 6)  for the right side
+  // (4, 3, 0), (4, 7, 3)  for the left side
+  // (4, 6, 7), (4, 5, 6)  for the back side
+  // (3, 6, 2), (3, 7, 6)  for the top side
+  // (1, 4, 0), (1, 5, 4)  for the bottom side
 
-const boundingBoxVertexSource = `#version 300 es
+  const boundingBoxVertexSource = `#version 300 es
   // WebGL2 requires specifying the floating point precision once per program object
   precision highp float;
 
@@ -118,7 +118,7 @@ const boundingBoxVertexSource = `#version 300 es
   }
 `;
 
-const boundingBoxFragmentSource = `#version 300 es
+  const boundingBoxFragmentSource = `#version 300 es
   // WebGL2 requires specifying the floating point precision once per program object
   precision highp float;
 
@@ -137,11 +137,11 @@ const boundingBoxFragmentSource = `#version 300 es
   }
 `;
 
-// The vertex shader hardcodes the screen-aligned quad that is used to trigger the
-// fragment shader.
-//
-// We are building a screen-aligned quad:
-//
+  // The vertex shader hardcodes the screen-aligned quad that is used to trigger the
+  // fragment shader.
+  //
+  // We are building a screen-aligned quad:
+  // 
   // 3--------------------------2
   // |                          |
   // |                          |
@@ -149,7 +149,7 @@ const boundingBoxFragmentSource = `#version 300 es
   // |                          |
   // |                          |
   // 0--------------------------1
-  //
+  // 
   //  y
   //  ^
   //  |
@@ -159,7 +159,7 @@ const boundingBoxFragmentSource = `#version 300 es
 
   // So we are generating the triangles: (0, 1, 2), (1, 2, 3)
 
-const volumeRenderingVertexSource = `#version 300 es
+  const volumeRenderingVertexSource = `#version 300 es
   // WebGL2 requires specifying the floating point precision once per program object
   precision highp float;
 
@@ -187,7 +187,7 @@ const volumeRenderingVertexSource = `#version 300 es
   }
 `;
 
-const volumeRenderingFragmentSource = `#version 300 es
+  const volumeRenderingFragmentSource = `#version 300 es
   // WebGL2 requires specifying the floating point precision once per program object
   precision highp float;
   precision highp sampler2D;
@@ -217,6 +217,9 @@ const volumeRenderingFragmentSource = `#version 300 es
               // direction of the ray
   out vec4 out_color; // The output variable where we will store the final color that we
                       // painstakingly raycasted
+
+
+
 
   /// This function computes the final color for the ray traversal by actually performing
   /// the volume rendering.
@@ -279,57 +282,50 @@ const volumeRenderingFragmentSource = `#version 300 es
           //
           //   @TODO: Implement the front-to-back compositing here
           //
+          // Ray samples volume, each sample contributes to final color
+          // Current sample (color.a & color.rgb) blended with accumolated color (result.rgb)
+          // Break when opacity does not contribute
 
-          // result is vec 4 with the accumulative values
-          // color is current value
-          // (1-result.a) from slide 124
-          result.rgb = (1.0 - result.a) * color.rgb * color.a  + result.rgb;
-          result.a = (1.0 - result.a) * color.a + result.a;
-
-
-
+          result.rgb += (1.0 - result.a) * color.rgb * color.a;
+          result.a += (1.0 - result.a) * color.a;
+          if (result.a >= 0.99) {  
+			    break;
+		      }
         }
         else if (compositingMethod == CompositingMethodFirstHitPoint) {
           //
           //   @TODO: Implement the first hitpoint compositing here
           //
+          // Ray looks for sample value where color.a is larger than threshold
+          // Final color is set to that samples color
 
-          //slide 122
-          // change 0.1 ? donno which intensity threshold
-          if(color.a > 0.25){
-            result = color;
-            break;
+          if (color.a > 0.25) {  
+          result = color;
+          break;
           }
-
-          //intensity is the scalar value of the scalar field of the density in this case. 
-          //Contour lines on a map marking areas of equal elevation. ^^
-
-
-
         }
         else if (compositingMethod == CompositingMethodMaximumIntensityProjection) {
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-
-          // slide 123
-          // change result if current a is larger
-          if(result.a < color.a){
+		      // Samples opacity is compared to highest current opacity 
+          // Update if sample opacity is larger than previous
+          if (color.a > result.a) {
             result = color;
           }
-
-
         }
       }
-
       // Step further along the ray
       t += tIncr;
     }
-
     // If we get here, the while loop above terminated, so we are done with the ray, so
     // we can return the result
     return result;
   }
+
+
+
+
 
   void main() {
     // Access the entry point texture at our current pixel location to get the entry pos
@@ -347,7 +343,7 @@ const volumeRenderingFragmentSource = `#version 300 es
     const int RenderTypeVolumeSlice = 5;
     const int RenderTypeVolumeSliceWithTransferFunction = 6;
 
-    // The values that are checked against here have to be synced with the renderVolume
+    // The values that are checked against here have to be synced with the renderVolume 
     if (renderType == RenderTypeVolumeRendering) {
       // Check for an early out. If the entry coordinate is the same as the exit
       // coordinate then our current pixel is missing the volume, so there is no need for
@@ -411,1089 +407,704 @@ const volumeRenderingFragmentSource = `#version 300 es
   }
 `;
 
+  /// This function creates an OpenGL program object from the provided vertex and fragment
+  /// sources.  If the creation of the OpenGL shader objects or the OpenGL program object
+  /// fails, a null object is returned.
+  /// @param gl the OpenGL context in which the program is created
+  /// @param vertexSource the source that is used for compiling the vertex shader
+  /// @param fragmentSource the source that is used for compiling the fragment shader
+  /// @return the compiled and linked program object or null if there was an error with the
+  ///         compilation or the linking
+  function createProgram(gl, vertexSource, fragmentSource) {
+    // Helper function to load a shader of the specified type (Vertex or Fragment)
+    function loadShader(gl, type, source) {
+      // Create the ShaderObject
+      let shader = gl.createShader(type);
 
-/// This function creates an OpenGL program object from the provided vertex and fragment
-/// sources.  If the creation of the OpenGL shader objects or the OpenGL program object
-/// fails, a null object is returned.
-/// @param gl the OpenGL context in which the program is created
-/// @param vertexSource the source that is used for compiling the vertex shader
-/// @param fragmentSource the source that is used for compiling the fragment shader
-/// @return the compiled and linked program object or null if there was an error with the
-///         compilation or the linking
-function createProgram(gl, vertexSource, fragmentSource) {
-  // Helper function to load a shader of the specified type (Vertex or Fragment)
-  function loadShader(gl, type, source) {
-    // Create the ShaderObject
-    let shader = gl.createShader(type);
+      // Set the source code of the shader
+      gl.shaderSource(shader, source);
 
-    // Set the source code of the shader
-    gl.shaderSource(shader, source);
+      // Compile the shader code
+      gl.compileShader(shader);
 
-    // Compile the shader code
-    gl.compileShader(shader);
-
-    // Check for compile errors
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      postError("Failed to compile shader: " + gl.getShaderInfoLog(shader));
-      gl.deleteShader(shader);
-      return null;
+      // Check for compile errors
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        postError("Failed to compile shader: " + gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      else {
+        return shader;
+      }
     }
-    else {
-      return shader;
-    }
-  }
 
-  // Create the vertex shader object
-  let vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexSource);
-  // Create the fragment shader object
-  let fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    // Create the vertex shader object
+    let vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexSource);
+    // Create the fragment shader object
+    let fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
 
-  // If either of the shaders failed to compile, we bail out
-  if (!vertexShader || !fragmentShader) {
-    return;
-  }
-
-  // Create the ProgramObject
-  let program = gl.createProgram();
-  // Attach the vertex and fragment shaders to the program object
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  // Link the Program Object
-  gl.linkProgram(program);
-
-  // Check for linking errors
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    postError('Failed to create program object: ' + gl.getProgramInfoLog(program));
-    gl.deleteProgram(program);
-    return;
-  }
-
-  return program;
-}
-
-
-
-/// This function is called when the transfer function texture on the GPU should be
-/// updated.  Whether the transfer function values are computed here or just retrieved
-/// from somewhere else is up to decide for the implementation.
-///
-/// @param gl the OpenGL context
-/// @param transferFunction the texture object that is updated by this function
-function updateTransferFunction(gl, transferFunction) {
-  // Create a new array that holds the values for the transfer function.  The width of 256
-  // is also hard-coded further down where the transferFunctionTexture OpenGL object is
-  // created, so if you want to change it here, you have to change it there as well.  We
-  // multiply the value by 4 as we have RGBA for each pixel.
-  // Also we created the transfer function texture using the UNSIGNED_BYTE type, which
-  // means that every value in the transfer function has to be between [0, 255]
-
-  // This data should, at the end of your code, contain the information for the transfer
-  // function.  Each value is stored sequentially (RGBA,RGBA,RGBA,...) for 256 values,
-  // which get mapped to [0, 1] by OpenGL
-  let data = new Uint8Array(256 * 4);
-
-
-  ////////////////////////////////////////////////////////////////////////////////////////
-  /// Beginning of the provided transfer function
-
-  // The provided transfer function that you'll replace with your own solution is a
-  // relatively simple ramp with the first 50 values being set to 0 to reduce the noise in
-  // the image.  The remainder of the ramp is just using different angles for the color
-  // components
-  /*
-  const cutoff = 50;
-
-  for (let i = 0; i < cutoff * 4; i += 4) {
-     // Set RGBA all to 0
-     data[i] = 0;
-     data[i + 1] = 0;
-     data[i + 2] = 0;
-     data[i + 3] = 0;
-   }
-
-   // For now, just create a linear ramp from 0 to 1. We start at the cutoff value and fill
-   // the rest of the array
-   for (let i = cutoff * 4; i < 256 * 4; i += 4) {
-     // convert i into a value [0, 256] and set it
-     const it = i / 4;
-     data[i] = 2 * it;
-     data[i + 1] = it;
-     data[i + 2] = 3 * it;
-     data[i + 3] = it;
-   }
-   */
-  /// End of the provided transfer function
-  ////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-  // @TODO:  Replace the transfer function specification above with your own transfer
-  //         function editor result
-
-  var nodeData = getNodeData();
-  //console.log(119, nodeData);
-  //console.log(120, nodeData);
-  /*
-  for (let i = 0; i < nodeData.length; i++) {
-    //var opacity = circleArrayNode[i];
-    //var start = circleArrayNode[i+1];
-    //var end = circleArrayNode[i+2];
-    //var color = hexToRgb(circleArrayNode[i].color);
-    var opacity = nodeData[i].opacity;
-    var start = nodeData[i].start;
-    var end = nodeData[i].end;
-    var color = nodeData[i].color;
-    //console.log(121, start);
-    //console.log(122, color[1]);
-    console.log(123, opacity);
-    for (var j = start; j < end; j+=4) {
-      console.log(124, opacity);
-      data[j] += color[0];
-      data[j+1] += color[1];
-      data[j+2] += color[2];
-      data[j+3] = opacity;
-      //console.log(125, data[31]);
-      //console.log(125, data[31]);
-      //console.log(125, data[31]);
-    }
-  }
-  */
-  let averageData = Array.from(Array(256*4)).fill(0);
-  let numNodesAt = Array.from(Array(256)).fill(0);
-  //console.log(126, averageData);
-  //console.log(127, nodeData);
-  for (let i = 0; i < nodeData.length; i++) {
-    let opacity = nodeData[i].opacity;
-    let start = nodeData[i].start;
-    let end = nodeData[i].end;
-    let color = nodeData[i].color;
-    //console.log(128, opacity);
-    //console.log(128, opacity);
-    for (let j = start*4; j < end*4; j+=4) {
-      averageData[j] += color[0] * opacity;
-      averageData[j+1] += color[1] * opacity;
-      averageData[j+2] += color[2] * opacity;
-      (averageData[j+3] + opacity) >= 255 ? averageData[j+3] = 255 : averageData[j+3] += opacity;
-      numNodesAt[j/4] += 1;
-      //console.log(129, averageData[j+3])
-    }
-  }
-  //console.log(130, averageData);
-  for (let i = 0; i < averageData.length; i+=4) {
-    //console.log(130, averageData[i+3]);
-    averageData[i+3] != 0 ? averageData[i] = averageData[i] / averageData[i+3] : averageData[i] = 0;
-    averageData[i+3] != 0 ? averageData[i+1] /= averageData[i+3] : averageData[i+1] = 0;
-    averageData[i+3] != 0 ? averageData[i+2] /= averageData[i+3] : averageData[i+2] = 0;
-    //console.log(131, averageData[i]);
-  }
-  //console.log(130, averageData);
-  for (let i = 0; i < averageData.length; i+=4) {
-    data[i] = Math.min(averageData[i]/numNodesAt[i/4], 255);
-    data[i+1] = Math.min(averageData[i+1]/numNodesAt[i/4], 255);
-    data[i+2] = Math.min(averageData[i+2]/numNodesAt[i/4], 255);
-    data[i+3] = averageData[i+3];
-  }
-
-
-  //console.log(126, data);
-
-  //
-
-  // Upload the new data to the texture
-  //console.log(117, "Updating the transfer function texture");
-  gl.bindTexture(gl.TEXTURE_2D, transferFunction);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-}
-
-
-
-/// Function that renders the bounding box using the provided model and view matrices. The
-/// front-facing triangles are rendered into the framebuffer provided at 'fbFront', the
-/// back-facing triangles will be rendered into the 'fbBack' framebuffer using the shader
-/// program 'program'.
-///
-/// @param gl the OpenGL context
-/// @param program the Program Object that is used to render the bounding box
-/// @param modelMatrix the matrix that encodes the deformation of the bounding box that
-///        should be done to accomodate non-cube volumetric datasets
-/// @param viewMatrix the matrix that encodes the location of the camera
-/// @param projectionMatrix the projection matrix that encodes the camera parameters
-/// @param fbFront the Framebuffer to which the front side of the bounding box is rendered
-/// @param fbBack the Framebuffer to which the back side of the bounding box is rendered
-function renderBoundingbox(gl, program, modelMatrix, viewMatrix, projectionMatrix,
-                           fbFront, fbBack)
-{
-  //
-  //   Initial setup common for both the front and back side
-  //
-  gl.enable(gl.CULL_FACE);
-
-  // Set the matrices used for the perspective rendering of the bounding box
-  gl.useProgram(program);
-  {
-    const location = gl.getUniformLocation(program, "modelMatrix");
-    gl.uniformMatrix4fv(location, false, modelMatrix);
-  }
-  {
-    const location = gl.getUniformLocation(program, "viewMatrix");
-    gl.uniformMatrix4fv(location, false, viewMatrix);
-  }
-  {
-    const location = gl.getUniformLocation(program, "projectionMatrix");
-    gl.uniformMatrix4fv(location, false, projectionMatrix);
-  }
-
-  //
-  // First render the back side
-  //
-  // Bind the back framebuffer as the target to modify
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbBack);
-
-  // Clear the color
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // We are rendering the back side of the bounding box, so we want to cull the
-  // front-facing triangles
-  gl.cullFace(gl.FRONT);
-
-  // Our bounding box consists of 36 vertices, so we pass that number here. All of the
-  // vertex positions are hardcoded in the shader, so there is no need to get into the
-  // vertex buffer shizzle over here
-  gl.drawArrays(gl.TRIANGLES, 0, 36);
-
-
-  //
-  // Then render the front side
-  //
-  // Bind the front framebuffer as the target to modify
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbFront);
-
-  // Clear the color
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // We are rendering the front side of the bounding box, so we want to cull the
-  // back-facing triangles
-  gl.cullFace(gl.BACK);
-
-  // Our bounding box consists of 36 vertices, so we pass that number here. All of the
-  // vertex positions are hardcoded in the shader, so there is no need to get into the
-  // vertex buffer shizzle over here
-  gl.drawArrays(gl.TRIANGLES, 0, 36);
-}
-
-
-
-/// This function renders the volume into the main framebuffer.
-/// @param gl the OpenGL context
-/// @param program the volume rendering program object that is executed to raycast
-/// @param entryTexture the texture object that contains the entry point texture to
-///        determine the entry point for each ray of the image
-/// @param exitTexture the texture object that contains the exit point texture to
-///        determine the exit point for each ray of the image
-/// @param transferFunctionTexture the texture object that contains the transfer function
-///        that should be used in the direct volume rendering
-/// @param the step size between samples along the ray as determined by the user
-/// @param compositingType the kind of compositing that should be used during the
-///        rendering.  Might be 'ftb' for front-to-back compositing, 'fhp' for the first
-///        hit point compositing, or 'mip' for maximum-intensity projection compositing
-/// @param renderType the type of rendering that we want to create on the screen. This
-///        value is mainly used for debugging purposes and might be 'volume' if the direct
-///        volume rendering is desired, 'entry' if only the entry points should be shown,
-///        'exit' if the exit points should be rendered, 'direction' if the absolute value
-///        of the ray direction for each pixel is desired, 'transfer' to show a
-///        representation of the transfer function, 'slice' to show a single grayscale
-///        slice of the volume, and finally 'slice-transfer' to show a single slide of the
-///        volume but with the transfer function applied to each pixel
-function renderVolume(gl, program, volumeTexture, entryTexture, exitTexture,
-                      transferFunctionTexture, stepSize, compositingType, renderType)
-{
-  // Change the framebuffer to the browser-provided one
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-  // Clear the color
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Bind the program used to render the volume
-  gl.useProgram(program);
-
-  // Bind the entry point texture
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, entryTexture);
-
-  gl.uniform1i(gl.getUniformLocation(program, "entryPoints"), 0);  // 0 == gl.TEXTURE0
-
-  // Bind the exit point texture
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, exitTexture);
-
-  gl.uniform1i(gl.getUniformLocation(program, "exitPoints"), 1); // 1 == gl.TEXTURE1
-
-  // Bind the volume texture
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_3D, volumeTexture);
-
-  gl.uniform1i(gl.getUniformLocation(program, "volume"), 2); // 2 == gl.TEXTURE2
-
-  // Bind the transfer function
-  gl.activeTexture(gl.TEXTURE3);
-  gl.bindTexture(gl.TEXTURE_2D, transferFunctionTexture);
-  gl.uniform1i(gl.getUniformLocation(program, "transferFunction"), 3); // 3 == gl.TEXTURE3
-
-  gl.uniform1f(gl.getUniformLocation(program, "stepSize"), stepSize);
-
-  // This if-statement has to be synchronized with the HTML radio button values as the
-  // strings here are the same as the values in those radio buttons.  If new values are
-  // added here, the volume rendering shader has to be updated as well
-  if (renderType == "volume") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 0);
-  }
-  else if (renderType == "entry") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 1);
-  }
-  else if (renderType == "exit") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 2);
-  }
-  else if (renderType == "direction") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 3);
-  }
-  else if (renderType == "transfer") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 4);
-  }
-  else if (renderType == "slice") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 5);
-  }
-  else if (renderType == "slice-transfer") {
-    gl.uniform1i(gl.getUniformLocation(program, "renderType"), 6);
-  }
-
-  // This if statement has to be synchronized with the HTML radio button values as the
-  // strings here are the same as the values in those radio buttons.  If new values are
-  // added here, the volume rendering shader has to be updated as well
-  if (compositingType == "ftb") {
-    gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 0);
-  }
-  else if (compositingType == "fhp") {
-    gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 1);
-  }
-  else if (compositingType == "mip") {
-    gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 2);
-  }
-
-
-  // Trigger the volume rendering by rendering the 2 triangles (= 6 vertices) that/
-  // comprise the screen-aligned quad.  The positions of the vertices are hard-coded in
-  // the shader, so there is no need to worry about vertex buffer objects
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
-
-
-
-/// Main function to be executed after the page has been loaded.  This will cause the
-/// loading of the assets and trigger the render loop that will continuously update the
-/// rendering.  This function is marked as async as our 'fetch' request to get the volume
-/// data requires this.
-async function main() {
-  // Get the canvas object from the main document
-  let canvas = document.querySelector("#glCanvas");
-
-  // Get a WebGL 2.0 context from the canvas
-  let gl = canvas.getContext("webgl2");
-
-  // WebGL 2 is not supported on many browsers yet
-  if (!gl) {
-    postError("Error initializing WebGL2 context");
-    return;
-  }
-
-  console.log(100, "WebGL2 canvas created successfully");
-
-  //
-  //   Initialize the shader programs
-  //
-  console.log(101, "Creating bounding box OpenGL program object");
-  const boundingBoxProgram = createProgram(
-    gl, boundingBoxVertexSource, boundingBoxFragmentSource
-  );
-
-  console.log(102, "Creating volume rendering OpenGL program object");
-  const volumeRenderingProgram = createProgram(
-    gl, volumeRenderingVertexSource, volumeRenderingFragmentSource
-  );
-
-  // If either program failed to compile or link, it has already printed an error
-  if (!boundingBoxProgram || !volumeRenderingProgram) {
-    return;
-  }
-
-  console.log(103, "Both program objects were created successfully");
-
-  //
-  //   General setup for the OpenGL context
-  //
-  // Set the clear color to black with full opaqueness
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
-  //
-  //   Creating intermediate framebuffer
-  //
-  // We create two framebuffers to render the entry and exit points into so that they are
-  // available during the volume rendering
-
-  console.log(104, "Creating the entry point texture");
-  // Create a new OpenGL texture
-  const entryTexture = gl.createTexture();
-  // Make the next texture the current 2D texture
-  gl.bindTexture(gl.TEXTURE_2D, entryTexture);
-
-  // Allocate the space for the texture;  the 'null' in the data causes the data to be
-  // reserved, but we don't have to specify any specific data to use
-  gl.texImage2D(
-    gl.TEXTURE_2D,    // texture type
-    0,                // mip-map level
-    gl.RGB,           // internal format
-    canvas.width,     // texture width
-    canvas.height,    // texture height
-    0,                // border value
-    gl.RGB,           // format
-    gl.UNSIGNED_BYTE, // type
-    null              // data
-  );
-
-  // We want to do linear interpolation with this texture
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  // It shouldn't happen that we are accessing the texture outside the range, but these
-  // value need to be set in order to make OpenGL happy
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  console.log(105, "Creating the entry point frame buffer object");
-  // Create the actual framebuffer for the entry points
-  const entryFramebuffer = gl.createFramebuffer();
-  // Make this framebuffer the currently active one
-  gl.bindFramebuffer(gl.FRAMEBUFFER, entryFramebuffer);
-  // Attach the previously created texture to this framebuffer
-  gl.framebufferTexture2D(
-    gl.FRAMEBUFFER,
-    gl.COLOR_ATTACHMENT0,   // attachment position in the framebuffer
-    gl.TEXTURE_2D,          // texture type
-    entryTexture,           // target texture
-    0                       // mip-map level at which to attach the texture
-  );
-
-  console.log(106, "Creating the exit point texture");
-  // Now do the same thing for the exit texture
-  const exitTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, exitTexture);
-
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, canvas.width, canvas.height, 0, gl.RGB,
-    gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  console.log(107, "Creating the exit point frame buffer");
-  const exitFramebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, exitFramebuffer);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D,
-    exitTexture, 0);
-
-  // Reset the framebuffer to the browser-provided one just in case
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-  //
-  //   Create the texture that holds the transfer function
-  //
-  console.log(108, "Creating the transfer function texture");
-  const transferFunctionTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, transferFunctionTexture);
-  // We hard-code the resolution of the transfer function to 256 pixels
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-  // Set the texture parameters that are required by OpenGL
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  //
-  //   Load the volume data
-  //
-  console.log(109, "Creating the texture holding the volume");
-  const volumeTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_3D, volumeTexture);
-  let modelMatrix = mat4.create();
-  {
-    // Download the pig.raw file from the local server
-    console.log(110, "Downloading 'pig.raw' from 'localhost'");
-    let response;
-    try {
-      response = await fetch('pig.raw');
-    }
-    catch (error) {
-      // Something went wrong, so we have to bail
-      postError("Error accessing volume 'pig.raw': " + error);
-      return;
-    }
-    if (!response.ok) {
-      // The fetch request didn't fail catastrophically, but it still didn't succeed
-      postError("Error accessing volume 'pig.raw'");
+    // If either of the shaders failed to compile, we bail out
+    if (!vertexShader || !fragmentShader) {
       return;
     }
 
-    // Access the response payload as a binary data blob
-    console.log(111, "Accessing the blob data from the response");
-    const blob = await response.blob();
-    // Convert it into an array buffer
-    console.log(112, "Cast the blob into an array buffer");
-    const data = await blob.arrayBuffer();
-    // From the available meta data for the pig.raw dataset I know that each voxel is
-    // 16 bit unsigned integer
-    console.log(113, "Cast the array buffer into a Uint16 typed array");
-    const typedData = new Uint16Array(data);
-    // Our volume renderer really likes 8 bit data, so let's convert it
-    console.log(114, "Convert the array into a Uint8 array");
-    const convertedData = new Uint8Array(typedData.length)
-    for (var i = 0; i < typedData.length; i++) {
-      // The range of the dataset is [0, 4096), so we need to convert that into
-      // [0, 256) manually
-      convertedData[i] = typedData[i] / 4096.0 * 256.0
+    // Create the ProgramObject
+    let program = gl.createProgram();
+    // Attach the vertex and fragment shaders to the program object
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    // Link the Program Object
+    gl.linkProgram(program);
+
+    // Check for linking errors
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      postError('Failed to create program object: ' + gl.getProgramInfoLog(program));
+      gl.deleteProgram(program);
+      return;
     }
 
-    // OUR OWN CODE
+    return program;
+  }
 
-    loadRawData(convertedData);
 
-    // END OF OUR CODE
-    // The volume size also comes from the available meta data for the pig.raw
-    // if you want to have a look at the metadata, the pig.dat contains that
-    const volumeSize = [ 512, 512, 134 ];
 
-    console.log(115, "Upload the volume to the GPU");
-    gl.texImage3D(
-      gl.TEXTURE_3D,    // 3D texture -> volume
-      0,                // the mipmap level, still 0
-      gl.R8,            // the texture should only have a single component
-      volumeSize[0],    // x dimension of the volume
-      volumeSize[1],    // y dimension of the volume
-      volumeSize[2],    // z dimension of the volume
-      0,                // value used for the border voxels
-      gl.RED,           // only a single component, and that is Red
-      gl.UNSIGNED_BYTE, // each voxel is represented by a single unsigned byte
-      convertedData     // the volume data
+  /// This function is called when the transfer function texture on the GPU should be
+  /// updated.  Whether the transfer function values are computed here or just retrieved
+  /// from somewhere else is up to decide for the implementation.
+  ///
+  /// @param gl the OpenGL context
+  /// @param transferFunction the texture object that is updated by this function
+  function updateTransferFunction(gl, transferFunction) {
+    // Create a new array that holds the values for the transfer function.  The width of 256
+    // is also hard-coded further down where the transferFunctionTexture OpenGL object is
+    // created, so if you want to change it here, you have to change it there as well.  We
+    // multiply the value by 4 as we have RGBA for each pixel.
+    // Also we created the transfer function texture using the UNSIGNED_BYTE type, which
+    // means that every value in the transfer function has to be between [0, 255]
+
+    // This data should, at the end of your code, contain the information for the transfer
+    // function.  Each value is stored sequentially (RGBA,RGBA,RGBA,...) for 256 values,
+    // which get mapped to [0, 1] by OpenGL
+    let data = new Uint8Array(256 * 4);
+
+    data = fillColor("first", data);
+    data = fillColor("second", data);
+    data = fillColor("third", data);
+
+    // Upload the new data to the texture
+    console.log(117, "Updating the transfer function texture");
+    gl.bindTexture(gl.TEXTURE_2D, transferFunction);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  }
+
+  // New function
+  function fillColor(order, data) {
+
+    // Get variables from sliders
+    const width = document.getElementById(order + "-width").value*4;
+    const pos = document.getElementById(order + "-position").value;
+    const op = document.getElementById(order + "-opacity").value;
+
+    // Get color
+    // Skip first sign (#) 
+    // Select 2 values (for r,g,b) each
+    // Convert from hexadecimal to base 10
+    const color = document.getElementById(order + "-color").value;
+    const r = parseInt(color.substr(1, 2), 16);
+    const g = parseInt(color.substr(3, 2), 16);
+    const b = parseInt(color.substr(5, 2), 16);
+
+    // Another example: Width only changes to the right of the block
+    // let i = pos * 4; i < pos * 4 + (width * 4); i += 4)
+    for (let i = pos * 4 - (width * 4) / 2; i < pos * 4 + (width * 4) / 2; i += 4) {
+
+      // Sum of values
+      data[i] = data[i] + r;
+      data[i + 1] = data[i+1] + g;
+      data[i + 2] = data[i+2] + b;
+      data[i + 3] = op;
+
+      // Another example:
+      // Overwrite the previous color
+      // const it = i / 4;
+      // data[i] = r;
+      // data[i + 1] = g;
+      // data[i + 2] = 3 * b;
+      // data[i + 3] = it;
+
+    }
+
+    return data;
+  }
+
+  /// Function that renders the bounding box using the provided model and view matrices. The
+  /// front-facing triangles are rendered into the framebuffer provided at 'fbFront', the
+  /// back-facing triangles will be rendered into the 'fbBack' framebuffer using the shader
+  /// program 'program'.
+  ///
+  /// @param gl the OpenGL context
+  /// @param program the Program Object that is used to render the bounding box
+  /// @param modelMatrix the matrix that encodes the deformation of the bounding box that
+  ///        should be done to accomodate non-cube volumetric datasets
+  /// @param viewMatrix the matrix that encodes the location of the camera
+  /// @param projectionMatrix the projection matrix that encodes the camera parameters
+  /// @param fbFront the Framebuffer to which the front side of the bounding box is rendered
+  /// @param fbBack the Framebuffer to which the back side of the bounding box is rendered
+  function renderBoundingbox(gl, program, modelMatrix, viewMatrix, projectionMatrix,
+    fbFront, fbBack) {
+    //
+    //   Initial setup common for both the front and back side
+    //
+    gl.enable(gl.CULL_FACE);
+
+    // Set the matrices used for the perspective rendering of the bounding box
+    gl.useProgram(program);
+    {
+      const location = gl.getUniformLocation(program, "modelMatrix");
+      gl.uniformMatrix4fv(location, false, modelMatrix);
+    }
+    {
+      const location = gl.getUniformLocation(program, "viewMatrix");
+      gl.uniformMatrix4fv(location, false, viewMatrix);
+    }
+    {
+      const location = gl.getUniformLocation(program, "projectionMatrix");
+      gl.uniformMatrix4fv(location, false, projectionMatrix);
+    }
+
+    //
+    // First render the back side
+    //
+    // Bind the back framebuffer as the target to modify
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbBack);
+
+    // Clear the color
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // We are rendering the back side of the bounding box, so we want to cull the
+    // front-facing triangles
+    gl.cullFace(gl.FRONT);
+
+    // Our bounding box consists of 36 vertices, so we pass that number here. All of the
+    // vertex positions are hardcoded in the shader, so there is no need to get into the
+    // vertex buffer shizzle over here
+    gl.drawArrays(gl.TRIANGLES, 0, 36);
+
+
+    //
+    // Then render the front side
+    //
+    // Bind the front framebuffer as the target to modify
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbFront);
+
+    // Clear the color
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // We are rendering the front side of the bounding box, so we want to cull the
+    // back-facing triangles
+    gl.cullFace(gl.BACK);
+
+    // Our bounding box consists of 36 vertices, so we pass that number here. All of the
+    // vertex positions are hardcoded in the shader, so there is no need to get into the
+    // vertex buffer shizzle over here
+    gl.drawArrays(gl.TRIANGLES, 0, 36);
+  }
+
+
+
+  /// This function renders the volume into the main framebuffer.
+  /// @param gl the OpenGL context
+  /// @param program the volume rendering program object that is executed to raycast
+  /// @param entryTexture the texture object that contains the entry point texture to
+  ///        determine the entry point for each ray of the image
+  /// @param exitTexture the texture object that contains the exit point texture to
+  ///        determine the exit point for each ray of the image
+  /// @param transferFunctionTexture the texture object that contains the transfer function
+  ///        that should be used in the direct volume rendering
+  /// @param the step size between samples along the ray as determined by the user
+  /// @param compositingType the kind of compositing that should be used during the
+  ///        rendering.  Might be 'ftb' for front-to-back compositing, 'fhp' for the first
+  ///        hit point compositing, or 'mip' for maximum-intensity projection compositing
+  /// @param renderType the type of rendering that we want to create on the screen. This
+  ///        value is mainly used for debugging purposes and might be 'volume' if the direct
+  ///        volume rendering is desired, 'entry' if only the entry points should be shown,
+  ///        'exit' if the exit points should be rendered, 'direction' if the absolute value
+  ///        of the ray direction for each pixel is desired, 'transfer' to show a
+  ///        representation of the transfer function, 'slice' to show a single grayscale
+  ///        slice of the volume, and finally 'slice-transfer' to show a single slide of the
+  ///        volume but with the transfer function applied to each pixel
+  function renderVolume(gl, program, volumeTexture, entryTexture, exitTexture,
+    transferFunctionTexture, stepSize, compositingType, renderType) {
+    // Change the framebuffer to the browser-provided one
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Clear the color
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Bind the program used to render the volume
+    gl.useProgram(program);
+
+    // Bind the entry point texture
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, entryTexture);
+
+    gl.uniform1i(gl.getUniformLocation(program, "entryPoints"), 0);  // 0 == gl.TEXTURE0
+
+    // Bind the exit point texture
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, exitTexture);
+
+    gl.uniform1i(gl.getUniformLocation(program, "exitPoints"), 1); // 1 == gl.TEXTURE1
+
+    // Bind the volume texture
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_3D, volumeTexture);
+
+    gl.uniform1i(gl.getUniformLocation(program, "volume"), 2); // 2 == gl.TEXTURE2
+
+    // Bind the transfer function
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, transferFunctionTexture);
+    gl.uniform1i(gl.getUniformLocation(program, "transferFunction"), 3); // 3 == gl.TEXTURE3
+
+    gl.uniform1f(gl.getUniformLocation(program, "stepSize"), stepSize);
+
+    // This if-statement has to be synchronized with the HTML radio button values as the
+    // strings here are the same as the values in those radio buttons.  If new values are
+    // added here, the volume rendering shader has to be updated as well
+    if (renderType == "volume") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 0);
+    }
+    else if (renderType == "entry") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 1);
+    }
+    else if (renderType == "exit") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 2);
+    }
+    else if (renderType == "direction") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 3);
+    }
+    else if (renderType == "transfer") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 4);
+    }
+    else if (renderType == "slice") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 5);
+    }
+    else if (renderType == "slice-transfer") {
+      gl.uniform1i(gl.getUniformLocation(program, "renderType"), 6);
+    }
+
+    // This if statement has to be synchronized with the HTML radio button values as the
+    // strings here are the same as the values in those radio buttons.  If new values are
+    // added here, the volume rendering shader has to be updated as well
+    if (compositingType == "ftb") {
+      gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 0);
+    }
+    else if (compositingType == "fhp") {
+      gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 1);
+    }
+    else if (compositingType == "mip") {
+      gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 2);
+    }
+
+
+    // Trigger the volume rendering by rendering the 2 triangles (= 6 vertices) that/
+    // comprise the screen-aligned quad.  The positions of the vertices are hard-coded in
+    // the shader, so there is no need to worry about vertex buffer objects
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+
+
+  /// Main function to be executed after the page has been loaded.  This will cause the
+  /// loading of the assets and trigger the render loop that will continuously update the
+  /// rendering.  This function is marked as async as our 'fetch' request to get the volume
+  /// data requires this.
+  async function main() {
+    // Get the canvas object from the main document
+    let canvas = document.querySelector("#glCanvas");
+
+    // Get a WebGL 2.0 context from the canvas
+    let gl = canvas.getContext("webgl2");
+
+    // WebGL 2 is not supported on many browsers yet
+    if (!gl) {
+      postError("Error initializing WebGL2 context");
+      return;
+    }
+
+    console.log(100, "WebGL2 canvas created successfully");
+
+    //
+    //   Initialize the shader programs
+    //
+    console.log(101, "Creating bounding box OpenGL program object");
+    const boundingBoxProgram = createProgram(
+      gl, boundingBoxVertexSource, boundingBoxFragmentSource
     );
 
-    // Compute the model matrix for this data set.  These values are all also part of the
-    // meta data for this data set (see the .dat file, if you are interested in them)
-    mat4.rotate(modelMatrix, modelMatrix, 3 * Math.PI / 2, [1.0, 0.0, 0.0]);
-    mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.7052631578947368]);
-  }
-  // We need to specify these parameters to make the texture well formed in the eyes of
-  // OpenGL, compared to all the other times, now we also need to specify the wrapping
-  // behavior of the R (the third texture dimension) component
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+    console.log(102, "Creating volume rendering OpenGL program object");
+    const volumeRenderingProgram = createProgram(
+      gl, volumeRenderingVertexSource, volumeRenderingFragmentSource
+    );
 
-  // Create the projection matrix
-  let projectionMatrix = mat4.create();
-  {
-    const fieldOfView = 45 * 2.0 * Math.PI / 360.0;   // 45 degrees in radians
-    const aspectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight; // assuming > 1.0
-    const zNear = 0.1;  // Near clipping plane
-    const zFar = 100.0; // Far clipping plane
-
-    // Use a convenience method to create a perspective matrix for the bounding box
-    mat4.perspective(projectionMatrix, fieldOfView, aspectRatio, zNear, zFar);
-  }
-
-  //
-  //   Rendering
-  //
-  function internalRender() {
-    // If for whatever reason the transfer function is dirty, create the new data
-    // representation and upload to the texture
-    if (TransferFunctionIsDirty) {
-      updateTransferFunction(gl, transferFunctionTexture);
-      TransferFunctionIsDirty = false;
-
-      // If we update the transfer function, that also implies that the rendering has
-      // changed
-      RenderingIsDirty = true;
-    }
-
-    // If the rendering is not dirty, nothing has changed since the last animationframe
-    // that would warrant a rerender, so we just queue ourselves up again and yield now
-    if (!RenderingIsDirty) {
-      requestAnimationFrame(internalRender);
+    // If either program failed to compile or link, it has already printed an error
+    if (!boundingBoxProgram || !volumeRenderingProgram) {
       return;
     }
 
-    let viewMatrix = mat4.create();
+    console.log(103, "Both program objects were created successfully");
+
+    //
+    //   General setup for the OpenGL context
+    //
+    // Set the clear color to black with full opaqueness
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    //
+    //   Creating intermediate framebuffer
+    //
+    // We create two framebuffers to render the entry and exit points into so that they are
+    // available during the volume rendering
+
+    console.log(104, "Creating the entry point texture");
+    // Create a new OpenGL texture
+    const entryTexture = gl.createTexture();
+    // Make the next texture the current 2D texture
+    gl.bindTexture(gl.TEXTURE_2D, entryTexture);
+
+    // Allocate the space for the texture;  the 'null' in the data causes the data to be
+    // reserved, but we don't have to specify any specific data to use
+    gl.texImage2D(
+      gl.TEXTURE_2D,    // texture type
+      0,                // mip-map level
+      gl.RGB,           // internal format
+      canvas.width,     // texture width
+      canvas.height,    // texture height
+      0,                // border value
+      gl.RGB,           // format
+      gl.UNSIGNED_BYTE, // type
+      null              // data
+    );
+
+    // We want to do linear interpolation with this texture
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // It shouldn't happen that we are accessing the texture outside the range, but these
+    // value need to be set in order to make OpenGL happy 
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    console.log(105, "Creating the entry point frame buffer object");
+    // Create the actual framebuffer for the entry points
+    const entryFramebuffer = gl.createFramebuffer();
+    // Make this framebuffer the currently active one
+    gl.bindFramebuffer(gl.FRAMEBUFFER, entryFramebuffer);
+    // Attach the previously created texture to this framebuffer
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,   // attachment position in the framebuffer
+      gl.TEXTURE_2D,          // texture type
+      entryTexture,           // target texture
+      0                       // mip-map level at which to attach the texture
+    );
+
+    console.log(106, "Creating the exit point texture");
+    // Now do the same thing for the exit texture
+    const exitTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, exitTexture);
+
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, canvas.width, canvas.height, 0, gl.RGB,
+      gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    console.log(107, "Creating the exit point frame buffer");
+    const exitFramebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, exitFramebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D,
+      exitTexture, 0);
+
+    // Reset the framebuffer to the browser-provided one just in case
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    //
+    //   Create the texture that holds the transfer function
+    //
+    console.log(108, "Creating the transfer function texture");
+    const transferFunctionTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, transferFunctionTexture);
+    // We hard-code the resolution of the transfer function to 256 pixels
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    // Set the texture parameters that are required by OpenGL
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+
+    //
+    //   Load the volume data
+    //
+    console.log(109, "Creating the texture holding the volume");
+    const volumeTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_3D, volumeTexture);
+    let modelMatrix = mat4.create();
     {
-      // Compute the camera location by converting spherical coordinates into cartesian
-      const r = document.getElementById("camera-r").value / 10.0;
-      const phi = document.getElementById("camera-phi").value;
+      // Download the pig.raw file from the local server
+      console.log(110, "Downloading 'pig.raw' from 'localhost'");
+      let response;
+      try {
+        response = await fetch('pig.raw');
+      }
+      catch (error) {
+        // Something went wrong, so we have to bail
+        postError("Error accessing volume 'pig.raw': " + error);
+        return;
+      }
+      if (!response.ok) {
+        // The fetch request didn't fail catastrophically, but it still didn't succeed
+        postError("Error accessing volume 'pig.raw'");
+        return;
+      }
 
-      // The values from the sliders are in Degrees, but the trig functions want radians
-      const phiRad = phi * Math.PI / 180.0;
-      const theta = document.getElementById("camera-theta").value;
-      const thetaRad = theta * Math.PI / 180.0;
+      // Access the response payload as a binary data blob
+      console.log(111, "Accessing the blob data from the response");
+      const blob = await response.blob();
+      // Convert it into an array buffer
+      console.log(112, "Cast the blob into an array buffer");
+      const data = await blob.arrayBuffer();
+      // From the available meta data for the pig.raw dataset I know that each voxel is 
+      // 16 bit unsigned integer
+      console.log(113, "Cast the array buffer into a Uint16 typed array");
+      const typedData = new Uint16Array(data);
+      // Our volume renderer really likes 8 bit data, so let's convert it
+      console.log(114, "Convert the array into a Uint8 array");
+      const convertedData = new Uint8Array(typedData.length)
+      for (var i = 0; i < typedData.length; i++) {
+        // The range of the dataset is [0, 4096), so we need to convert that into
+        // [0, 256) manually
+        convertedData[i] = typedData[i] / 4096.0 * 256.0
+      }
 
-      // Conversion from spherical coordinates into cartesian
-      const x = r * Math.sin(thetaRad) * Math.cos(phiRad);
-      const y = r * Math.sin(thetaRad) * Math.sin(phiRad);
-      const z = r * Math.cos(thetaRad);
 
-      // And finally using a helper function to create the correct look-at matrix
-      mat4.lookAt(viewMatrix, [x, y, z], [0,0,0], [0, 0, 1]);
+      // The volume size also comes from the available meta data for the pig.raw
+      // if you want to have a look at the metadata, the pig.dat contains that
+      const volumeSize = [512, 512, 134];
+
+      console.log(115, "Upload the volume to the GPU");
+      gl.texImage3D(
+        gl.TEXTURE_3D,    // 3D texture -> volume
+        0,                // the mipmap level, still 0
+        gl.R8,            // the texture should only have a single component
+        volumeSize[0],    // x dimension of the volume
+        volumeSize[1],    // y dimension of the volume
+        volumeSize[2],    // z dimension of the volume
+        0,                // value used for the border voxels
+        gl.RED,           // only a single component, and that is Red
+        gl.UNSIGNED_BYTE, // each voxel is represented by a single unsigned byte
+        convertedData     // the volume data
+      );
+
+      // Compute the model matrix for this data set.  These values are all also part of the
+      // meta data for this data set (see the .dat file, if you are interested in them)
+      mat4.rotate(modelMatrix, modelMatrix, 3 * Math.PI / 2, [1.0, 0.0, 0.0]);
+      mat4.scale(modelMatrix, modelMatrix, [1.0, 1.0, 0.7052631578947368]);
+    }
+    // We need to specify these parameters to make the texture well formed in the eyes of
+    // OpenGL, compared to all the other times, now we also need to specify the wrapping
+    // behavior of the R (the third texture dimension) component
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+
+    // Create the projection matrix
+    let projectionMatrix = mat4.create();
+    {
+      const fieldOfView = 45 * 2.0 * Math.PI / 360.0;   // 45 degrees in radians
+      const aspectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight; // assuming > 1.0
+      const zNear = 0.1;  // Near clipping plane
+      const zFar = 100.0; // Far clipping plane
+
+      // Use a convenience method to create a perspective matrix for the bounding box
+      mat4.perspective(projectionMatrix, fieldOfView, aspectRatio, zNear, zFar);
     }
 
-    // First render the bounding box entry and exit points.  These will be rendered into
-    // the textures that back the 'entryFramebuffer' and 'exitFramebuffer' framebuffers
-    renderBoundingbox(gl, boundingBoxProgram, modelMatrix, viewMatrix, projectionMatrix,
-      entryFramebuffer, exitFramebuffer);
+    //
+    //   Rendering
+    //
+    function internalRender() {
+      // If for whatever reason the transfer function is dirty, create the new data
+      // representation and upload to the texture
+      if (TransferFunctionIsDirty) {
+        updateTransferFunction(gl, transferFunctionTexture);
+        TransferFunctionIsDirty = false;
 
-    // Get the step size from the slider and rescale to get into a proper range
-    const stepSize = 1.0 / document.getElementById("stepSize").value;
-    const compositing = document.querySelector('input[name="compositing"]:checked').value;
-    const renderType = document.querySelector('input[name="debug-output"]:checked').value;
-    renderVolume(gl, volumeRenderingProgram, volumeTexture, entryTexture, exitTexture,
-      transferFunctionTexture, stepSize, compositing, renderType);
+        // If we update the transfer function, that also implies that the rendering has
+        // changed
+        RenderingIsDirty = true;
+      }
 
-    // Request a new frame from the browser using us as the callback this will cause the
-    // rendering to loop and be constantly updated
+      // If the rendering is not dirty, nothing has changed since the last animationframe
+      // that would warrant a rerender, so we just queue ourselves up again and yield now
+      if (!RenderingIsDirty) {
+        requestAnimationFrame(internalRender);
+        return;
+      }
+
+      let viewMatrix = mat4.create();
+      {
+        // Compute the camera location by converting spherical coordinates into cartesian
+        const r = document.getElementById("camera-r").value / 10.0;
+        const phi = document.getElementById("camera-phi").value;
+
+        // The values from the sliders are in Degrees, but the trig functions want radians
+        const phiRad = phi * Math.PI / 180.0;
+        const theta = document.getElementById("camera-theta").value;
+        const thetaRad = theta * Math.PI / 180.0;
+
+        // Conversion from spherical coordinates into cartesian
+        const x = r * Math.sin(thetaRad) * Math.cos(phiRad);
+        const y = r * Math.sin(thetaRad) * Math.sin(phiRad);
+        const z = r * Math.cos(thetaRad);
+
+        // And finally using a helper function to create the correct look-at matrix
+        mat4.lookAt(viewMatrix, [x, y, z], [0, 0, 0], [0, 0, 1]);
+      }
+
+
+
+      // First render the bounding box entry and exit points.  These will be rendered into
+      // the textures that back the 'entryFramebuffer' and 'exitFramebuffer' framebuffers
+      renderBoundingbox(gl, boundingBoxProgram, modelMatrix, viewMatrix, projectionMatrix,
+        entryFramebuffer, exitFramebuffer);
+
+      // Get the step size from the slider and rescale to get into a proper range
+      const stepSize = 1.0 / document.getElementById("stepSize").value;
+      const compositing = document.querySelector('input[name="compositing"]:checked').value;
+      const renderType = document.querySelector('input[name="debug-output"]:checked').value;
+      renderVolume(gl, volumeRenderingProgram, volumeTexture, entryTexture, exitTexture,
+        transferFunctionTexture, stepSize, compositing, renderType);
+
+      // Request a new frame from the browser using us as the callback this will cause the
+      // rendering to loop and be constantly updated
+      requestAnimationFrame(internalRender);
+
+      // We are done with the rendering, so it is by definition not dirty anymore
+      RenderingIsDirty = false;
+    }
+
+    // Request the first frame, thus starting the render loop
+    console.log(116, "Trigger the initial rendering");
     requestAnimationFrame(internalRender);
-
-    // We are done with the rendering, so it is by definition not dirty anymore
-    RenderingIsDirty = false;
   }
 
-  // Request the first frame, thus starting the render loop
-  console.log(116, "Trigger the initial rendering");
-  requestAnimationFrame(internalRender);
-}
+  // This function has to be called in order to trigger a rerender.  Otherwise, we would
+  // render the same thing over and over and would kill each laptop's battery superfast.
+  // So DON'T FORGET to call this if you do something that would change the rendering.
+  // However, if you are only changing the transfer function, call the
+  // 'triggerTransferFunctionUpdate' instead as it will implicitly trigger a rendering
+  // update as well
+  function triggerRendering() {
+    RenderingIsDirty = true;
+  }
 
-// This function has to be called in order to trigger a rerender.  Otherwise, we would
-// render the same thing over and over and would kill each laptop's battery superfast.
-// So DON'T FORGET to call this if you do something that would change the rendering.
-// However, if you are only changing the transfer function, call the
-// 'triggerTransferFunctionUpdate' instead as it will implicitly trigger a rendering
-// update as well
-function triggerRendering() {
-  RenderingIsDirty = true;
-}
+  // This function has to be called in order to trigger an update of the transfer fucntion,
+  // similar to the triggerRendering method, we only upload the transfer function data to
+  // the GPU when triggered by the user interface to save on processing resources.  So DON'T
+  // FORGET to call this function if you are updating the transfer function or your changes
+  // won't be visible.
+  function triggerTransferFunctionUpdate() {
+    TransferFunctionIsDirty = true;
+  }
 
-// This function has to be called in order to trigger an update of the transfer fucntion,
-// similar to the triggerRendering method, we only upload the transfer function data to
-// the GPU when triggered by the user interface to save on processing resources.  So DON'T
-// FORGET to call this function if you are updating the transfer function or your changes
-// won't be visible.
-function triggerTransferFunctionUpdate() {
-  TransferFunctionIsDirty = true;
-}
-
-// Signals an error to the user
-function postError(msg) {
-  document.getElementById("error").innerHTML =
-    document.getElementById("error").innerHTML + "<p>" + msg + "</p>";
-}
+  // Signals an error to the user
+  function postError(msg) {
+    document.getElementById("error").innerHTML =
+      document.getElementById("error").innerHTML + "<p>" + msg + "</p>";
+  }
 
 </script>
-
-
-<style>
-  #transferCanvas {
-    border: 1px solid black;
-  }
-  #divRow{
-    display: flex;
-    flex-direction: row;
-    width: auto;
-  }
-  #colorDiv{
-    display: flex;
-    flex-direction: row;
-    width: auto;
-  }
-  #addDiv{
-    display: flex;
-    flex-direction: row;
-    width: auto;
-  }
-</style>
-
 
 
 <body onload="main();">
   <p id="error"></p>
-  <canvas id="glCanvas" width="640" height="480" ></canvas>
-  <canvas id="transferCanvas" width="640" height="480" ></canvas>
-
-  
-
-  <div>
-    <p>
-      Transfer Function parameters  
-    </p>
-    <div id="divRow">
-      <div id="colorDiv">
-        <input type="color" name="color1" value="#00AFB9" onchange="changeColor(this)">
-        <!--<input type="color" name="color2" value="#F07167" onchange="changeColor(this)">-->
-      </div>
-      <div id="addDiv">
-        <button onclick="addNode()">+</button>
-        <button onclick="removeNode()">-</button>
-      </div>
-    </div>
-    
-  </div>
-  
-
-  <p>
-    Rendering parameters
-    <div>Step size: <input type="range" min="10" max="10000" value="1000" class="slider" id="stepSize" oninput="triggerRendering();"> </div>
+  <div id="flex" style="display: flex;">
     <div>
-      <div>Compositing method:</div>
-      <div><input type="radio" name="compositing" value="ftb" onchange="triggerRendering();" checked>Front-to-back</div>
-      <div><input type="radio" name="compositing" value="fhp" onchange="triggerRendering();">First hit-point</div>
-      <div><input type="radio" name="compositing" value="mip" onchange="triggerRendering();">Maximum-intensity projection</div>
+      <canvas id="glCanvas" width="640" height="480"></canvas>      
     </div>
-  </p>
-  <p>
-    Camera
-      <div> r: <input type="range" min="0" max="100" value="50" class="slider" id="camera-r" oninput="triggerRendering();"></div>
-      <div> phi: <input type="range" min="0" max="360" value="35" class="slider" id="camera-phi" oninput="triggerRendering();"></div>
-      <div> theta: <input type="range" min="1" max="180" value="65" class="slider" id="camera-theta" oninput="triggerRendering();"></div>
-  </p>
-  <p>
-    Debugging
+    <!--
+    Add some UI elements here to modify the transfer function.  As mentioned above, you need to call the function 'triggerTransferFunctionUpdate' to trigger and update of the GPU representation of the transfer function texture.  If you don't call that function, no change will be visible.
+  -->
+    <!-- Transfer function -->
+    <div style="margin-left: 50px;">
+      <h2>Change Transfer Function</h2>
+      <!-- New color -->
+      <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
+      <!-- New color -->
+      <div style="margin:30px;"></div>
+      <div><input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
+      <!-- New color -->
+      <div style="margin:30px;"></div>
+      <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
+      <div> Position <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
+    </div>
+
+  </div>
+  <div style="display: flex;">
+    <div>
+      <p>
+        Rendering parameters
+      <div>Step size: <input type="range" min="10" max="10000" value="1000" class="slider" id="stepSize"
+          oninput="triggerRendering();"> </div>
+      <div>
+        <div>Compositing method:</div>
+        <div><input type="radio" name="compositing" value="ftb" onchange="triggerRendering();" checked>Front-to-back
+        </div>
+        <div><input type="radio" name="compositing" value="fhp" onchange="triggerRendering();">First hit-point</div>
+        <div><input type="radio" name="compositing" value="mip" onchange="triggerRendering();">Maximum-intensity
+          projection</div>
+      </div>
+      </p>
+    </div>
+    <div>
+      <p>
+        Camera
+      <div> r: <input type="range" min="0" max="100" value="50" class="slider" id="camera-r"
+          oninput="triggerRendering();"></div>
+      <div> phi: <input type="range" min="0" max="360" value="35" class="slider" id="camera-phi"
+          oninput="triggerRendering();"></div>
+      <div> theta: <input type="range" min="1" max="180" value="65" class="slider" id="camera-theta"
+          oninput="triggerRendering();"></div>
+      </p>
+    </div>
+    <div>
+      <p>
+        Debugging
       <div>Rendering output:</div>
-      <div><input type="radio" name="debug-output" value="volume" onchange="triggerRendering();" checked>Volume Rendering</div>
+      <div><input type="radio" name="debug-output" value="volume" onchange="triggerRendering();">Volume
+        Rendering</div>
       <div><input type="radio" name="debug-output" value="entry" onchange="triggerRendering();">Entry Points</div>
       <div><input type="radio" name="debug-output" value="exit" onchange="triggerRendering();">Exit Points</div>
       <div><input type="radio" name="debug-output" value="direction" onchange="triggerRendering();">Ray direction</div>
-      <div><input type="radio" name="debug-output" value="transfer" onchange="triggerRendering();">Transfer Function</div>
+      <div><input type="radio" name="debug-output" value="transfer" onchange="triggerRendering();" checked>Transfer
+        Function
+      </div>
       <div><input type="radio" name="debug-output" value="slice" onchange="triggerRendering();">Volume Slice</div>
-      <div><input type="radio" name="debug-output" value="slice-transfer" onchange="triggerRendering();">Volume Slice with transfer function</div>
-  </p>
-
-  <!--
-    Add some UI elements here to modify the transfer function.  As mentioned above, you need to call the function 'triggerTransferFunctionUpdate' to trigger and update of the GPU representation of the transfer function texture.  If you don't call that function, no change will be visible.
-  -->
-
+      <div><input type="radio" name="debug-output" value="slice-transfer" onchange="triggerRendering();">Volume Slice
+        with transfer function</div>
+      </p>
+    </div>
+  </div>
 
 </body>
-
-<script type="text/javascript">
-  let tfCanvas = document.querySelector("#transferCanvas");
-  var c = tfCanvas.getContext("2d");
-
-  var mouse = {x: 0, y: 0, down: false, nodeSelected: -1};
-  var maxRadius = 30;
-  var minRadius = 20;
-
-  function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-      x: evt.clientX - rect.left,
-      y: evt.clientY - rect.top
-    };
-  }
-
-  window.addEventListener('mousemove', function(e){
-    var mousePos = getMousePos(tfCanvas, e);
-    
-    mouse.x = mousePos.x;
-    mouse.y = mousePos.y;
-    mouse.down = e.buttons == 1;
-    //console.log(mouse);
-    //console.log(e.buttons == 1); 
-    if(e.buttons == 0){
-      mouse.nodeSelected = -1;
-    } 
-    //console.log(message);
-  }, false);
-
-  window.addEventListener('mouseup', function(e){
-    triggerTransferFunctionUpdate();
-  }, false);
-  
-
-  function Cricle(x, y, radius, color, moveableHor, type){
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.color = color;
-    this.moveableHor = moveableHor; 
-    this.type = type;
-
-    this.draw = function() {
-      c.beginPath();
-      c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-      
-      c.fillStyle = this.color;
-      c.fill();
-      
-      //context.strokeStyle = '#003300';
-      c.stroke();
-    }
-
-    this.update = function(){
-      if(Math.abs(mouse.x - this.x) < 20 && Math.abs(mouse.y - this.y) < 20){
-        if(this.radius < maxRadius){
-          this.radius += 1;
-        } 
-        
-      } else if(this.radius > minRadius){
-        this.radius -= 1;
-      }
-
-      this.draw();
-    }
-  }
-  var interactDist = 30;
-  function moveCircle(){
-    if(mouse.down){
-      //select a node
-      if(mouse.nodeSelected == -1){
-        for (let i = 0; i < circleArrayNode.length; i++) {
-          if(Math.abs(mouse.x - circleArrayNode[i].x) < interactDist && Math.abs(mouse.y - circleArrayNode[i].y) < interactDist){
-            mouse.nodeSelected = i;
-            //console.log(mouse.nodeSelected);
-          }
-        }
-      }
-      // move the node
-      if(mouse.nodeSelected > -1 && mouse.nodeSelected < circleArrayNode.length) {
-        //console.log(circleArrayNode[mouse.nodeSelected].type);
-        if(circleArrayNode[mouse.nodeSelected].type == 0){
-          
-          if(mouse.y > 36 && mouse.y < 425) {
-            circleArrayNode[mouse.nodeSelected].y = mouse.y;
-            circleArrayNode[mouse.nodeSelected].x = (circleArrayNode[mouse.nodeSelected+1].x + circleArrayNode[mouse.nodeSelected+2].x)/2;
-          }
-        }
-        if (circleArrayNode[mouse.nodeSelected].type == 1 ) {
-          if (mouse.x > 50 && mouse.x < 600 && mouse.x < circleArrayNode[mouse.nodeSelected+1].x) {
-            circleArrayNode[mouse.nodeSelected].x = mouse.x;
-            circleArrayNode[mouse.nodeSelected-1].x = (circleArrayNode[mouse.nodeSelected].x + circleArrayNode[mouse.nodeSelected+1].x)/2;
-            
-          }
-        }
-
-        if (circleArrayNode[mouse.nodeSelected].type == 2 ) {
-          if (mouse.x > 50 && mouse.x < 600 && mouse.x > circleArrayNode[mouse.nodeSelected-1].x) {
-            circleArrayNode[mouse.nodeSelected].x = mouse.x;
-            circleArrayNode[mouse.nodeSelected-2].x = (circleArrayNode[mouse.nodeSelected-1].x + circleArrayNode[mouse.nodeSelected].x)/2;
-          }
-        }
-      }
-    }    
-  }
-
-  var colorArray = [
-    "#00AFB9",
-    "#F07167",
-    "#FDFCDC",
-    "#1D3557",
-    "#283618",
-    "#BB3E03",
-  ];
-
-  var complimentaryColour = [
-    "#00676d",
-    "#e93021",
-    "#f9f694",
-    "#0a121e",
-    "#0e1308",
-    "#702502",
-  ];
-
-  var circleArrayNode = [];
-  var currentStartx = 150;
-  var colorindex = 0;
-
-  function changeColor(e){
-    let color = e.value;
-    let index = (e.name[e.name.length-1]-1)*3;
-    circleArrayNode[index].color = color;
-  }
-  
-  function addNode(){
-    if(circleArrayNode.length < 18){
-      colorindex++;
-      currentStartx += 60;
-
-      createPairNodes(currentStartx);
-      let div = document.getElementById("colorDiv");
-      let input = document.createElement("input");
-      input.type = "color";
-      input.name = "color" + (circleArrayNode.length/3);
-      
-      input.value = colorArray[colorindex];
-      input.onchange = function(){changeColor(this)};
-      //console.log(input);
-      div.appendChild(input);
-    }
-  }
-
-  function removeNode(){
-    if(circleArrayNode.length > 3){
-      circleArrayNode.pop();
-      circleArrayNode.pop();
-      circleArrayNode.pop();
-      colorindex--;
-      currentStartx -= 60;
-      let div = document.getElementById("colorDiv");
-      div.removeChild(div.lastChild);
-    }
-    
-  }
-  
-  function createPairNodes(start){
-    let randomColor = colorArray[colorindex];
-    let rancompColour = complimentaryColour[colorindex];
-
-    let Circle1 = new Cricle(currentStartx, 275, interactDist, randomColor, true, 0);
-    let Circle1start = new Cricle(currentStartx-40, 425, interactDist, rancompColour, false, 1);
-    let Circle1end = new Cricle(currentStartx+50, 425, interactDist, rancompColour, false, 2);
-
-    circleArrayNode.push(Circle1);
-    circleArrayNode.push(Circle1start);
-    circleArrayNode.push(Circle1end);
-  }
-
-  function getNodeData(){
-    var data = [];
-    //var nodePair = {opacity: 0, start: 0, end: 0, color: [0, 0, 0]};
-    for (let i = 0; i < circleArrayNode.length; i+=3) {
-      //console.log(399,i);
-      let opacity = Math.round(255 * (1 - (circleArrayNode[i].y - 35) / (425-35)));
-      let start = Math.round(255 * (circleArrayNode[i+1].x-50) /(600-50));
-      let end = Math.round(255 * (circleArrayNode[i+2].x-50) /(600-50));
-      let color = hexToRgb(circleArrayNode[i].color);
-      data.push({opacity: opacity, start: start, end: end, color: color});
-    }
-    //console.log(data);
-    return data;
-  }
-
-  function hexToRgb(hex){
-    let r = parseInt(hex.substring(1,3), 16);
-    let g = parseInt(hex.substring(3,5), 16);
-    let b = parseInt(hex.substring(5,7), 16);
-    return [r, g, b];
-  }
-
-  createPairNodes(currentStartx);
-
-  var histData = Array.from(Array(256)).fill(0);
-  function loadRawData(loadRawData){
-    console.log(loadRawData);
-    
-    for (let i = 0; i < loadRawData.length; i++) {
-      histData[loadRawData[i]]++;
-    }
-    // normalize data 0-100
-    for (let i = 0; i < histData.length; i++) {
-      histData[i] = Math.log(histData[i] + 1);
-    }
-
-    let histMax = Math.max(...histData);
-    console.log(histMax);
-    console.log(histData);
-    for (let i = 0; i < histData.length; i++) {
-      histData[i] = histData[i] / histMax;
-      //histData[i] = Math.round(histData[i] * 1000) / 1000;
-    }
-
-    console.log(Math.min(...histData));
-    console.log(histData);
-
-    
-  }
-
-  function drawHist(){
-    let yDiff = (425 - 35) / 2;
-    let scaledHistData = Array.from(Array(256)).fill(0);
-    for (let i = 0; i < histData.length; i++) {
-      scaledHistData[i] = (1 - histData[i]) * yDiff + yDiff + 35;
-    }
-    //console.log(Math.min(...scaledHistData));
-
-    let xStep = (600 - 50) / 256;
-    
-    //50, 35
-    //50, 425
-    //console.log(scaledHistData);
-    
-    c.fillStyle = "black"
-    c.beginPath();
-    c.moveTo(50, scaledHistData[0]);
-    for (var i = 1; i < scaledHistData.length-2; i++) {
-
-      c.lineTo(50 + i * xStep, scaledHistData[i]);
-      //console.log(50 + i * xStep);
-      //var pointx = 50 + i * xStep;
-      //var xc = (pointx + pointx+xStep) / 2;
-      //var yc = (scaledHistData[i] + scaledHistData[i + 1]) / 2;
-      //c.quadraticCurveTo(pointx, scaledHistData, xc, yc);
-    }
-    //c.quadraticCurveTo(pointx+xStep, scaledHistData[i], 600,scaledHistData[i+1]);
-
-    c.lineWidth = 3;
-    c.strokeStyle = "red";
-    c.stroke();
-    c.strokeStyle = "black";
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-    c.clearRect(0, 0, innerWidth, innerHeight);
-
-    c.fillStyle = "black"
-    c.beginPath();
-    c.moveTo(50, 35);
-    c.lineTo(50, 425);
-    c.lineTo(600, 425);
-    c.lineWidth = 5;
-    c.strokeStyle = "black";
-    c.stroke();
-    
-
-    c.font = "20px Arial";
-    c.textAlign = "center";
-    c.strokeStyle = "black";
-    c.save();
-    //c.translate(50, 50);
-    c.strokeStyle = "black";
-    c.rotate(-Math.PI/2);
-    c.fillText("Opacity", -70, 30);
-    c.restore();
-    c.fillText("Value", 575, 450);
-
-    drawHist();
-
-    for (let i = 0; i < circleArrayNode.length; i+=3) {
-      c.beginPath();
-      c.moveTo(circleArrayNode[i+1].x, circleArrayNode[i+1].y);
-      c.lineTo(circleArrayNode[i].x, circleArrayNode[i].y);
-      c.lineTo(circleArrayNode[i+2].x, circleArrayNode[i+2].y);
-      c.lineWidth = 3;
-      c.stroke();
-    }
-
-
-    
-    c.lineWidth = 1;
-    for (var i = 0; i < circleArrayNode.length; i++){
-      circleArrayNode[i].update();
-    }
-    moveCircle();
-   
-    //nodeData();
-  }
-  animate();
-
-</script>
 
 </html>

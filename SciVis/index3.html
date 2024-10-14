@@ -1,5 +1,5 @@
-<html></html>
-<meta charset="utf-8">
+<html>
+
 <!--
   Adding Brandon Jones and Colin MacKenzie IV's gl-matrix library that provides easy to
   use vector and matrix maths operations.  Source: https://github.com/toji/gl-matrix
@@ -20,7 +20,6 @@
   let TransferFunctionIsDirty = true;
 
 
-
   //
   //   Shader codes
   //
@@ -29,7 +28,7 @@
   //
   // var vertexSource = `
   // #version 300 es
-  // 
+  //
   // would not work as there is a \n after `
   //
 
@@ -141,7 +140,7 @@
   // fragment shader.
   //
   // We are building a screen-aligned quad:
-  // 
+  //
   // 3--------------------------2
   // |                          |
   // |                          |
@@ -149,7 +148,7 @@
   // |                          |
   // |                          |
   // 0--------------------------1
-  // 
+  //
   //  y
   //  ^
   //  |
@@ -191,8 +190,8 @@
   // WebGL2 requires specifying the floating point precision once per program object
   precision highp float;
   precision highp sampler2D;
-  precision highp sampler3D;
-
+  precision highp sampler3D;  
+  
   #line 197 // This sets the line numbers to match with the line numbers in this file
   uniform sampler2D entryPoints;  // The texture that holds the entry points
   uniform sampler2D exitPoints;   // The texture that holds the exit points
@@ -218,15 +217,12 @@
   out vec4 out_color; // The output variable where we will store the final color that we
                       // painstakingly raycasted
 
-
-
-
   /// This function computes the final color for the ray traversal by actually performing
   /// the volume rendering.
   /// @param entryCoord The coordinate where the ray enters the bounding box
   /// @param exitCoord The coordinates where the ray exits the bounding box
   /// @return The final color that this ray represents
-  vec4 traverseRay(vec3 entryCoord, vec3 exitCoord) {
+  vec4 traverseRay(vec3 entryCoord, vec3  exitCoord) {
     // Make some space to collect the resulting color for this ray
     vec4 result = vec4(0.0);
 
@@ -282,50 +278,52 @@
           //
           //   @TODO: Implement the front-to-back compositing here
           //
-          // Ray samples volume, each sample contributes to final color
-          // Current sample (color.a & color.rgb) blended with accumolated color (result.rgb)
-          // Break when opacity does not contribute
 
-          result.rgb += (1.0 - result.a) * color.rgb * color.a;
-          result.a += (1.0 - result.a) * color.a;
-          if (result.a >= 0.99) {  
-			    break;
-		      }
+          /*
+              Formula for front to back compositing is given by C'i = (1 - A'i-1) * Ci * Ai + C'i-1
+                                                            and A'i = (1 - A'i-1) * Ai + A'i-1
+
+              where C' -> vec4 result.rgb
+                    A' -> vec4 result.a       
+                    C  -> vec4 color.rgb
+                    A  -> vec4 color.a                                         
+          */
+
+          result.rgb = (1.0 - result.a) * color.rgb * color.a + result.rgb;
+          result.a = (1.0 - result.a) * color.a + result.a;
+        
         }
+
         else if (compositingMethod == CompositingMethodFirstHitPoint) {
           //
           //   @TODO: Implement the first hitpoint compositing here
           //
-          // Ray looks for sample value where color.a is larger than threshold
-          // Final color is set to that samples color
 
-          if (color.a > 0.25) {  
+          if(color.a > 0.1) {
           result = color;
           break;
           }
+
         }
         else if (compositingMethod == CompositingMethodMaximumIntensityProjection) {
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-		      // Samples opacity is compared to highest current opacity 
-          // Update if sample opacity is larger than previous
-          if (color.a > result.a) {
+
+          if(color.a > result.a) {
             result = color;
           }
         }
       }
+
       // Step further along the ray
       t += tIncr;
     }
+
     // If we get here, the while loop above terminated, so we are done with the ray, so
     // we can return the result
     return result;
   }
-
-
-
-
 
   void main() {
     // Access the entry point texture at our current pixel location to get the entry pos
@@ -343,7 +341,7 @@
     const int RenderTypeVolumeSlice = 5;
     const int RenderTypeVolumeSliceWithTransferFunction = 6;
 
-    // The values that are checked against here have to be synced with the renderVolume 
+    // The values that are checked against here have to be synced with the renderVolume
     if (renderType == RenderTypeVolumeRendering) {
       // Check for an early out. If the entry coordinate is the same as the exit
       // coordinate then our current pixel is missing the volume, so there is no need for
@@ -356,7 +354,7 @@
       vec4 pixelColor = traverseRay(entryCoord, exitCoord);
 
       // As the raycasting might not return a fully opaque color (for example if the ray
-      // exits the volume without being fully saturated), we can't just assing the color,
+      // exits the volume without being fully saturated), we can't just assign the color,
       // but need to mix (=lerp) it with a fully black background color
       out_color = mix(vec4(0.0, 0.0, 0.0, 1.0), pixelColor, pixelColor.a);
     }
@@ -380,7 +378,7 @@
       if (st.y > 0.2) {
         out_color = vec4(c.rgb, 1.0);
         return;
-      }
+    }
       // For the rest, render TF with transparency, over a checkerboard pattern
       float nCheckers = 20.0;
       vec2 pos = floor(st * nCheckers);
@@ -487,54 +485,100 @@
     // which get mapped to [0, 1] by OpenGL
     let data = new Uint8Array(256 * 4);
 
-    data = fillColor("first", data);
-    data = fillColor("second", data);
-    data = fillColor("third", data);
+    // @TODO:  Replace the transfer function specification above with your own transfer
+    //         function editor result
+
+    /*
+
+      We are creating a widget based solution
+
+      Opacity
+      ^
+      |                c__d
+      |                |  |
+      |               |    |
+      |    c_____d   |      |
+      |    /     \  /        \        c_d
+      |   /  red  \/   white  \       / \  yellow
+      | a/      a/ \b           \b  a/   \b
+      |--------------------------------------------> Value
+
+      The slope determines fading
+      The height of the widgets determines the opacity
+      The position of a & b can be changed using slider
+      The width of c-d can be changed using slider
+      The colour value can be changed using 3 inputs for R,G and B values
+      The opacity can be changed using slider
+    */
+
+    // Get slider input values
+    let a, b, cd, height, R, G, B, fadeLength, c, d, step;
+
+    // Initialize all RGBA to 0
+    for (let i = 0; i < 255 * 4; i += 4) {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    }
+
+    for(let j = 1; j <= widgetCount; j++) {
+        a = parseInt(document.getElementById("a" + j).value);
+        b = parseInt(document.getElementById("b" + j).value);
+        cd = parseInt(document.getElementById("cd" + j).value);
+        height = parseInt(document.getElementById("height" + j).value);
+
+       
+        let color = document.getElementById("color" + j).value;
+        let R = parseInt(color.slice(1, 3), 16);
+        let G = parseInt(color.slice(3, 5), 16);
+        let B = parseInt(color.slice(5, 7), 16);
+
+        fadeLength = Math.round(((b - a) - cd) / 2); 
+        c = a + fadeLength 
+        d = b - fadeLength; 
+        step = height / fadeLength; 
+
+      
+      let op = 0;
+      for (let i = a * 4; i < c * 4; i += 4) {
+    let prevOpacity = data[i + 3] / 255; // Normalize previous opacity to 0-1
+    let newOpacity = op / 255;           // Normalize current opacity to 0-1
+
+    // Blend the colors considering previous opacity
+    data[i] = (1 - prevOpacity) * R + prevOpacity * data[i];
+    data[i + 1] = (1 - prevOpacity) * G + prevOpacity * data[i + 1];
+    data[i + 2] = (1 - prevOpacity) * B + prevOpacity * data[i + 2];
+
+    // Blend opacity
+    data[i + 3] = Math.min(255, (prevOpacity + newOpacity) * 255);
+    op += step;
+  }
+
+    // Constant color in interval [c, d]
+    for (let i = c * 4; i < d * 4; i += 4) {
+      data[i] = Math.min(255, data[i] + R);
+      data[i + 1] = Math.min(255, data[i + 1] + G);
+      data[i + 2] = Math.min(255, data[i + 2] + B);
+      data[i + 3] = Math.min(255, data[i + 3] + height);
+    }
+
+    // Fade from color to 0 in interval [d, b]
+    op = height;
+    for (let i = d * 4; i < b * 4; i += 4) {
+      data[i] = Math.min(255, data[i] + R * (op / 255));
+      data[i + 1] = Math.min(255, data[i + 1] + G * (op / 255));
+      data[i + 2] = Math.min(255, data[i + 2] + B * (op / 255));
+      data[i + 3] = Math.min(255, data[i + 3] + op);
+      op -= step;
+    }
+
+    }
 
     // Upload the new data to the texture
     console.log(117, "Updating the transfer function texture");
     gl.bindTexture(gl.TEXTURE_2D, transferFunction);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-  }
-
-  // New function
-  function fillColor(order, data) {
-
-    // Get variables from sliders
-    const width = document.getElementById(order + "-width").value*4;
-    const pos = document.getElementById(order + "-position").value;
-    const op = document.getElementById(order + "-opacity").value;
-
-    // Get color
-    // Skip first sign (#) 
-    // Select 2 values (for r,g,b) each
-    // Convert from hexadecimal to base 10
-    const color = document.getElementById(order + "-color").value;
-    const r = parseInt(color.substr(1, 2), 16);
-    const g = parseInt(color.substr(3, 2), 16);
-    const b = parseInt(color.substr(5, 2), 16);
-
-    // Another example: Width only changes to the right of the block
-    // let i = pos * 4; i < pos * 4 + (width * 4); i += 4)
-    for (let i = pos * 4 - (width * 4) / 2; i < pos * 4 + (width * 4) / 2; i += 4) {
-
-      // Sum of values
-      data[i] = data[i] + r;
-      data[i + 1] = data[i+1] + g;
-      data[i + 2] = data[i+2] + b;
-      data[i + 3] = op;
-
-      // Another example:
-      // Overwrite the previous color
-      // const it = i / 4;
-      // data[i] = r;
-      // data[i + 1] = g;
-      // data[i + 2] = 3 * b;
-      // data[i + 3] = it;
-
-    }
-
-    return data;
   }
 
   /// Function that renders the bounding box using the provided model and view matrices. The
@@ -707,14 +751,11 @@
       gl.uniform1i(gl.getUniformLocation(program, "compositingMethod"), 2);
     }
 
-
     // Trigger the volume rendering by rendering the 2 triangles (= 6 vertices) that/
     // comprise the screen-aligned quad.  The positions of the vertices are hard-coded in
     // the shader, so there is no need to worry about vertex buffer objects
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
-
-
 
   /// Main function to be executed after the page has been loaded.  This will cause the
   /// loading of the assets and trigger the render loop that will continuously update the
@@ -790,7 +831,7 @@
     // We want to do linear interpolation with this texture
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     // It shouldn't happen that we are accessing the texture outside the range, but these
-    // value need to be set in order to make OpenGL happy 
+    // value need to be set in order to make OpenGL happy
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -841,7 +882,6 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-
     //
     //   Load the volume data
     //
@@ -873,7 +913,7 @@
       // Convert it into an array buffer
       console.log(112, "Cast the blob into an array buffer");
       const data = await blob.arrayBuffer();
-      // From the available meta data for the pig.raw dataset I know that each voxel is 
+      // From the available meta data for the pig.raw dataset I know that each voxel is
       // 16 bit unsigned integer
       console.log(113, "Cast the array buffer into a Uint16 typed array");
       const typedData = new Uint16Array(data);
@@ -972,8 +1012,6 @@
         mat4.lookAt(viewMatrix, [x, y, z], [0, 0, 0], [0, 0, 1]);
       }
 
-
-
       // First render the bounding box entry and exit points.  These will be rendered into
       // the textures that back the 'entryFramebuffer' and 'exitFramebuffer' framebuffers
       renderBoundingbox(gl, boundingBoxProgram, modelMatrix, viewMatrix, projectionMatrix,
@@ -1015,6 +1053,21 @@
   // FORGET to call this function if you are updating the transfer function or your changes
   // won't be visible.
   function triggerTransferFunctionUpdate() {
+
+    //Print error msg
+    const elementId = event.target.id;
+    const widgetNr = elementId.slice(-1);
+    const widthT = document.getElementById("cd" + widgetNr ).value;
+    const posA = document.getElementById("a" + widgetNr).value;
+    const posB = document.getElementById("b" + widgetNr).value;
+
+    document.getElementById("errorMessage").innerHTML = "";
+
+    if (widthT > (posB - posA)){
+      //write out error message to web page that widthT mus be smaller than widthB
+      document.getElementById("errorMessage").innerHTML = "Error: c-d width must be smaller for Widget #" + widgetNr;
+    }
+
     TransferFunctionIsDirty = true;
   }
 
@@ -1024,86 +1077,93 @@
       document.getElementById("error").innerHTML + "<p>" + msg + "</p>";
   }
 
+  //Widgets (egen fkn)
+  let widgetCount = 1;
+
+  function addNewWidget() {
+
+    widgetCount++;
+
+    // Clone original widget container
+    const widgetContainer = document.getElementById("widgetContainer");
+    const originalWidget = document.querySelector(".widget");
+    const newWidget = originalWidget.cloneNode(true);
+
+    // Set new unique ID values for the elements in our new widget
+    const elements = newWidget.querySelectorAll("*");
+    elements.forEach(element => {
+        element.id = element.id.slice(0,-1) + widgetCount; //Slice the last element of Id (the widgetCount nr) and append Id new widgetCount nr
+    });
+
+    // Append the new widget to the container
+    widgetContainer.appendChild(newWidget);
+
+    //Update name of new widget
+    document.getElementById("name" + widgetCount).innerHTML = "Widget #" + widgetCount;
+  }
+
 </script>
 
-
 <body onload="main();">
-  <p id="error"></p>
-  <div id="flex" style="display: flex;">
+  <div style="padding: 10px;">
     <div>
-      <canvas id="glCanvas" width="640" height="480"></canvas>      
-    </div>
-    <!--
-    Add some UI elements here to modify the transfer function.  As mentioned above, you need to call the function 'triggerTransferFunctionUpdate' to trigger and update of the GPU representation of the transfer function texture.  If you don't call that function, no change will be visible.
-  -->
-    <!-- Transfer function -->
-    <div style="margin-left: 50px;">
-      <h2>Change Transfer Function</h2>
-      <!-- New color -->
-      <div><input type="color" id="first-color" name="first-color" value="#ff0000" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="first-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="first-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position <input type="range" min="0" max="256" value="50" class="slider" id="first-position" oninput="triggerTransferFunctionUpdate();"></div>
-      <!-- New color -->
-      <div style="margin:30px;"></div>
-      <div><input type="color" id="second-color" name="second-color" value="#00ff00" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="second-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="second-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position <input type="range" min="0" max="256" value="125" class="slider" id="second-position" oninput="triggerTransferFunctionUpdate();"></div>
-      <!-- New color -->
-      <div style="margin:30px;"></div>
-      <div><input type="color" id="third-color" name="third-color" value="#0000ff" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Opacity: <input type="range" min="0" max="255" value="50" class="slider" id="third-opacity" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Width: <input type="range" min="0" max="64" value="10" class="slider" id="third-width" oninput="triggerTransferFunctionUpdate();"></div>
-      <div> Position <input type="range" min="0" max="256" value="200" class="slider" id="third-position" oninput="triggerTransferFunctionUpdate();"></div>
-    </div>
-
-  </div>
-  <div style="display: flex;">
-    <div>
+        <div style="display: flex;">
+            <p id="error"></p>
+            <canvas id="glCanvas" width="640" height="480" style="margin-right: 10px;"></canvas>
+            <div id="widgetContainer" style="width: 50%; height: 150px; float: right;">
+                <!-- <canvas id="WidgetVis" width="525" height="250" style="border: 1px solid black; background-color:grey opacity: 0.5;"></canvas></br> -->
+                <button style="margin: 5px; padding: 5px" onclick="addNewWidget()">Add Widget</button>
+                <div class="widget">
+                  <h3 id="name1">Widget #1</h3>   
+                  <div>Position of a: <input type="range" min="0" max="255" value="20" class="slider" id="a1" oninput="triggerTransferFunctionUpdate()"></div>
+                  <div>Position of b:<input type="range" min="0" max="255" value="50" class="slider" id="b1" oninput="triggerTransferFunctionUpdate()"></div>
+                  <div>Width of c-d<input type="range" min="1" max="255" value="10" class="slider" id="cd1" oninput="triggerTransferFunctionUpdate()"></div>
+                  <div>Widget Opacity<input type="range" min="0" max="255" value="50" class="slider" id="height1" oninput="triggerTransferFunctionUpdate()"></div>
+                    Widget Colour:
+                      <input type="color" id="color1" min="0" max="255"  value="#ff0000" step="any" oninput="triggerTransferFunctionUpdate()"></input>
+                      
+                </div>
+              </div>
+        </div>
+        <h3 id="errorMessage" style="color:red"></h3> <!--Used by triggerTransferFunctionUpdate() to print out error message-->
       <p>
         Rendering parameters
-      <div>Step size: <input type="range" min="10" max="10000" value="1000" class="slider" id="stepSize"
-          oninput="triggerRendering();"> </div>
-      <div>
-        <div>Compositing method:</div>
-        <div><input type="radio" name="compositing" value="ftb" onchange="triggerRendering();" checked>Front-to-back
+        <div>Step size: <input type="range" min="10" max="10000" value="1000" class="slider" id="stepSize" oninput="triggerRendering();"> </div>
+        <div>
+          <div>Compositing method:</div>
+          <div><input type="radio" name="compositing" value="ftb" onchange="triggerRendering();" checked>Front-to-back</div>
+          <div><input type="radio" name="compositing" value="fhp" onchange="triggerRendering();">First hit-point</div>
+          <div><input type="radio" name="compositing" value="mip" onchange="triggerRendering();">Maximum-intensity projection</div>
         </div>
-        <div><input type="radio" name="compositing" value="fhp" onchange="triggerRendering();">First hit-point</div>
-        <div><input type="radio" name="compositing" value="mip" onchange="triggerRendering();">Maximum-intensity
-          projection</div>
-      </div>
       </p>
-    </div>
-    <div>
+
       <p>
         Camera
-      <div> r: <input type="range" min="0" max="100" value="50" class="slider" id="camera-r"
-          oninput="triggerRendering();"></div>
-      <div> phi: <input type="range" min="0" max="360" value="35" class="slider" id="camera-phi"
-          oninput="triggerRendering();"></div>
-      <div> theta: <input type="range" min="1" max="180" value="65" class="slider" id="camera-theta"
-          oninput="triggerRendering();"></div>
+        <div> r: <input type="range" min="0" max="100" value="50" class="slider" id="camera-r" oninput="triggerRendering();"></div>
+        <div> phi: <input type="range" min="0" max="360" value="35" class="slider" id="camera-phi" oninput="triggerRendering();"></div>
+        <div> theta: <input type="range" min="1" max="180" value="65" class="slider" id="camera-theta"  oninput="triggerRendering();"></div>
       </p>
-    </div>
-    <div>
+       
       <p>
         Debugging
       <div>Rendering output:</div>
-      <div><input type="radio" name="debug-output" value="volume" onchange="triggerRendering();">Volume
-        Rendering</div>
-      <div><input type="radio" name="debug-output" value="entry" onchange="triggerRendering();">Entry Points</div>
-      <div><input type="radio" name="debug-output" value="exit" onchange="triggerRendering();">Exit Points</div>
-      <div><input type="radio" name="debug-output" value="direction" onchange="triggerRendering();">Ray direction</div>
-      <div><input type="radio" name="debug-output" value="transfer" onchange="triggerRendering();" checked>Transfer
-        Function
-      </div>
-      <div><input type="radio" name="debug-output" value="slice" onchange="triggerRendering();">Volume Slice</div>
-      <div><input type="radio" name="debug-output" value="slice-transfer" onchange="triggerRendering();">Volume Slice
-        with transfer function</div>
+        <div><input type="radio" name="debug-output" value="volume" onchange="triggerRendering();" checked>Volume Rendering</div>
+        <div><input type="radio" name="debug-output" value="entry" onchange="triggerRendering();">Entry Points</div>
+        <div><input type="radio" name="debug-output" value="exit" onchange="triggerRendering();">Exit Points</div>
+        <div><input type="radio" name="debug-output" value="direction" onchange="triggerRendering();">Ray direction</div>
+        <div><input type="radio" name="debug-output" value="transfer" onchange="triggerRendering();">Transfer Function
+        </div>
+        <div><input type="radio" name="debug-output" value="slice" onchange="triggerRendering();">Volume Slice</div>
+        <div><input type="radio" name="debug-output" value="slice-transfer" onchange="triggerRendering();">Volume Slice with transfer function</div>
       </p>
     </div>
+
+    
   </div>
+  <!--
+    Add some UI elements here to modify the transfer function.  As mentioned above, you need to call the function 'triggerTransferFunctionUpdate' to trigger and update of the GPU representation of the transfer function texture.  If you don't call that function, no change will be visible.
+  -->
+
 
 </body>
 
