@@ -278,28 +278,15 @@
           //
           //   @TODO: Implement the front-to-back compositing here
           //
-
-          /*
-              Formula for front to back compositing is given by C'i = (1 - A'i-1) * Ci * Ai + C'i-1
-                                                            and A'i = (1 - A'i-1) * Ai + A'i-1
-
-              where C' -> vec4 result.rgb
-                    A' -> vec4 result.a       
-                    C  -> vec4 color.rgb
-                    A  -> vec4 color.a                                         
-          */
-
           result.rgb = (1.0 - result.a) * color.rgb * color.a + result.rgb;
           result.a = (1.0 - result.a) * color.a + result.a;
-        
         }
 
         else if (compositingMethod == CompositingMethodFirstHitPoint) {
           //
           //   @TODO: Implement the first hitpoint compositing here
           //
-
-          if(color.a > 0.1) {
+          if(color.a > 0.15) {
           result = color;
           break;
           }
@@ -309,7 +296,6 @@
           //
           //   @TODO: Implement the maximum-intensity projection here
           //
-
           if(color.a > result.a) {
             result = color;
           }
@@ -485,95 +471,77 @@
     // which get mapped to [0, 1] by OpenGL
     let data = new Uint8Array(256 * 4);
 
-    // @TODO:  Replace the transfer function specification above with your own transfer
-    //         function editor result
+// Initialize all RGBA values to 0
+for (let i = 0; i < 256 * 4; i += 4) {
+  data[i] = 0;
+  data[i + 1] = 0;
+  data[i + 2] = 0;
+  data[i + 3] = 0;
+}
 
-    /*
+for (let j = 1; j <= widgetCount; j++) {
+  // Get slider values for each widget
+  a = parseInt(document.getElementById("a" + j).value);
+  b = parseInt(document.getElementById("b" + j).value);
+  cd = parseInt(document.getElementById("cd" + j).value);
+  height = parseInt(document.getElementById("height" + j).value);
 
-      We are creating a widget based solution
+  let color = document.getElementById("color" + j).value;
+  let R = parseInt(color.slice(1, 3), 16);
+  let G = parseInt(color.slice(3, 5), 16);
+  let B = parseInt(color.slice(5, 7), 16);
 
-      Opacity
-      ^
-      |                c__d
-      |                |  |
-      |               |    |
-      |    c_____d   |      |
-      |    /     \  /        \        c_d
-      |   /  red  \/   white  \       / \  yellow
-      | a/      a/ \b           \b  a/   \b
-      |--------------------------------------------> Value
+  // Calculate fadeLength and positions of c and d
+  fadeLength = Math.round((b - a - cd) / 2); // Length of fade-in and fade-out areas
+  c = a + fadeLength; // Position of c
+  d = b - fadeLength; // Position of d
 
-      The slope determines fading
-      The height of the widgets determines the opacity
-      The position of a & b can be changed using slider
-      The width of c-d can be changed using slider
-      The colour value can be changed using 3 inputs for R,G and B values
-      The opacity can be changed using slider
-    */
+  // Step value for the fade area
+  let step = height / fadeLength;
 
-    // Get slider input values
-    let a, b, cd, height, R, G, B, fadeLength, c, d, step;
+  // Fade from 0 to height in interval [a, c]
+  let op = 0;
+  for (let i = a * 4; i < c * 4; i += 4) {
+    let prevOpacity = data[i + 3] / 255; // Existing opacity in [0, 1]
+    let newOpacity = op / 255;           // New opacity in [0, 1]
 
-    // Initialize all RGBA to 0
-    for (let i = 0; i < 255 * 4; i += 4) {
-      data[i] = 0;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
-      data[i + 3] = 0;
-    }
+    // Blend colors based on opacities
+    data[i] = Math.min(255, data[i] + R);
+    data[i + 1] = Math.min(255, data[i + 1] + G);
+    data[i + 2] = Math.min(255, data[i + 2] + B);
+    data[i + 3] = Math.min(255, data[i + 3] + height);
 
-    for(let j = 1; j <= widgetCount; j++) {
-        a = parseInt(document.getElementById("a" + j).value);
-        b = parseInt(document.getElementById("b" + j).value);
-        cd = parseInt(document.getElementById("cd" + j).value);
-        height = parseInt(document.getElementById("height" + j).value);
-
-       
-        let color = document.getElementById("color" + j).value;
-        let R = parseInt(color.slice(1, 3), 16);
-        let G = parseInt(color.slice(3, 5), 16);
-        let B = parseInt(color.slice(5, 7), 16);
-
-        fadeLength = Math.round(((b - a) - cd) / 2); 
-        c = a + fadeLength 
-        d = b - fadeLength; 
-        step = height / fadeLength; 
-
-      
-      let op = 0;
-      for (let i = a * 4; i < c * 4; i += 4) {
-    let prevOpacity = data[i + 3] / 255; // Normalize previous opacity to 0-1
-    let newOpacity = op / 255;           // Normalize current opacity to 0-1
-
-    // Blend the colors considering previous opacity
-    data[i] = (1 - prevOpacity) * R + prevOpacity * data[i];
-    data[i + 1] = (1 - prevOpacity) * G + prevOpacity * data[i + 1];
-    data[i + 2] = (1 - prevOpacity) * B + prevOpacity * data[i + 2];
-
-    // Blend opacity
+    // Update opacity
     data[i + 3] = Math.min(255, (prevOpacity + newOpacity) * 255);
     op += step;
   }
 
-    // Constant color in interval [c, d]
-    for (let i = c * 4; i < d * 4; i += 4) {
-      data[i] = Math.min(255, data[i] + R);
-      data[i + 1] = Math.min(255, data[i + 1] + G);
-      data[i + 2] = Math.min(255, data[i + 2] + B);
-      data[i + 3] = Math.min(255, data[i + 3] + height);
-    }
+  // Constant color at full opacity in interval [c, d]
+  for (let i = c * 4; i < d * 4; i += 4) {
+    data[i] = Math.min(255, data[i] + R);
+    data[i + 1] = Math.min(255, data[i + 1] + G);
+    data[i + 2] = Math.min(255, data[i + 2] + B);
+    data[i + 3] = Math.min(255, data[i + 3] + height);
+  }
 
-    // Fade from color to 0 in interval [d, b]
-    op = height;
-    for (let i = d * 4; i < b * 4; i += 4) {
-      data[i] = Math.min(255, data[i] + R * (op / 255));
-      data[i + 1] = Math.min(255, data[i + 1] + G * (op / 255));
-      data[i + 2] = Math.min(255, data[i + 2] + B * (op / 255));
-      data[i + 3] = Math.min(255, data[i + 3] + op);
-      op -= step;
-    }
+  // Fade from height to 0 in interval [d, b]
+  op = height;
+  for (let i = d * 4; i < b * 4; i += 4) {
+    let prevOpacity = data[i + 3] / 255; // Existing opacity in [0, 1]
+    let newOpacity = op / 255;           // New opacity in [0, 1]
 
-    }
+    // Blend colors based on opacities
+    data[i] = Math.min(255, data[i] + R);
+    data[i + 1] = Math.min(255, data[i + 1] + G);
+    data[i + 2] = Math.min(255, data[i + 2] + B);
+    data[i + 3] = Math.min(255, data[i + 3] + height);
+
+    // Update opacity
+    data[i + 3] = Math.min(255, (prevOpacity + newOpacity) * 255);
+    op -= step;
+  }
+}
+
 
     // Upload the new data to the texture
     console.log(117, "Updating the transfer function texture");
