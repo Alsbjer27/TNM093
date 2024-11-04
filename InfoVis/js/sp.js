@@ -5,8 +5,11 @@ function labcode(data, x_var, y_var, sp_svg, tooltip) {
   //------------------------------------------------------------------------------------->
   /** COMPUTER EXERCISE STARTS HERE  */
   //Task 5.1.1  -- Create the x-axis
-  var x;
-
+  var x = d3.scaleLinear().domain([
+      d3.min(data, function(d){return +d[x_var];}),
+      d3.max(data, function(d){return +d[x_var];})
+        ]).range([0, width]);
+  
 
   //Task 5.1.2  -- Append the axes to the svg
   var xAxis;
