@@ -17,9 +17,11 @@ and load libraries commonly used in the VR laboratory.
 
   <PythonScript DEF="PYCR" url="./ColorRandomizer.py"/>
       
-  <PythonScript DEF="MFtoSFBool" url="urn:candy:python/MFtoSFBool.py"/>
 
+  <PythonScript DEF="MFtoSFBool" url="urn:candy:python/MFtoSFBool.py"/>
   <PythonScript DEF="MFtoSFBool2" url="urn:candy:python/MFtoSFBool.py"/>
+  <PythonScript DEF="MFtoSFBool3" url="urn:candy:python/MFtoSFBool.py"/>
+
 
   <!--<Inline url="urn:candy:x3d/model_FeedbackTip.x3d"/>-->
 
@@ -34,15 +36,15 @@ and load libraries commonly used in the VR laboratory.
 
 
 <!-- SOUND 1-->
-<!--<VRSound location="1 -6 0" spatialize="TRUE">
+<VRSound location="8 -6 0" spatialize="true">
 <ReverbSoundEffect parametersPreset="SPACESTATION_LARGEROOM" />
 <AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
-</VRSound>-->
+</VRSound>
 
 <!-- SOUND 2-->
 <VRSound location="-1 1 0" spatialize="TRUE">
 <ReverbSoundEffect parametersPreset="MOOD_HELL" />
-<AudioClip DEF="SOUND" url="./sound/ljud-bonk-1.wav" loop="false"/>
+<AudioClip DEF="SOUND2" url="./sound/ljud-bonk-1.wav" loop="false"/>
 </VRSound>
 
 <!-- SOUND 3-->
@@ -52,7 +54,9 @@ and load libraries commonly used in the VR laboratory.
 </VRSound>-->
 
 <BooleanFilter DEF="BF"/>
+<BooleanFilter DEF="BF2"/>
 <TimeTrigger DEF="TT"/>
+<TimeTrigger DEF="TT2"/>
 
       <!-- For VR Experiments -->
       <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
@@ -72,8 +76,8 @@ and load libraries commonly used in the VR laboratory.
       <Transform translation="-0.05 -0.1 0.1" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
-              <FrictionalSurface DEF="FRICSURF"/>
-              <Material DEF="MAT1" diffuseColor="0 1 0" />
+              <FrictionalSurface DEF="FRICSURF" useRealtiveValues="false" stiffness="1200" damping="2" dynamicFriction="0.3"/>
+              <Material DEF="MAT1" diffuseColor="0 1 0"/>
             </Appearance>
             <Box size="0.01 0.1 0.01"/>
         </Shape>
@@ -83,7 +87,7 @@ and load libraries commonly used in the VR laboratory.
       <Transform translation="0.05 -0.1 0.1" rotation="0 0 1 0">
         <Shape>
             <Appearance shadow="true">
-              <FrictionalSurface USE="FRICSURF"/>
+              <FrictionalSurface DEF="FRICSURF2" useRealtiveValues="false" stiffness="1200" damping="2" dynamicFriction="0.8"/>
               <Material DEF="MAT1" diffuseColor="0 1 0" />
             </Appearance>
             <Box size="0.01 0.1 0.01"/>
@@ -124,7 +128,7 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--Rest-->
-      <Transform translation="0 -0.02 0">
+      <Transform translation="0 -0.01 0">
           <Shape>
             <Appearance shadow="true">
               <Material DEF="MAT2" diffuseColor="1 0 0"/>
@@ -168,16 +172,15 @@ and load libraries commonly used in the VR laboratory.
       <ROUTE fromNode="HDEV" fromField="trackerPosition" toNode="MR" toField="position"/>
       <ROUTE fromNode="HDEV" fromField="trackerOrientation" toNode="MR" toField="orientation"/>
 
-  <ROUTE fromNode='REST' fromField='isTouched' toNode='MFtoSFBool2' toField='value' />
-  <ROUTE fromNode='MFtoSFBool2' fromField='value' toNode='BF' toField='set_boolean' />
-  <ROUTE fromNode='BF' fromField='inputTrue' toNode='TT' toField='set_boolean' />
-  <ROUTE fromNode='TT' fromField='triggerTime' toNode='SOUND' toField='startTime' />
+      <ROUTE fromNode='REST' fromField='isTouched' toNode='MFtoSFBool2' toField='value' />
+      <ROUTE fromNode='MFtoSFBool2' fromField='value' toNode='BF' toField='set_boolean' />
+      <ROUTE fromNode='BF' fromField='inputTrue' toNode='TT' toField='set_boolean' />
+      <ROUTE fromNode='TT' fromField='triggerTime' toNode='SOUND' toField='startTime' />
 
-<!--<PythonScript DEF="ROTATOR" url="urn:candy:pthin/Rotator.py">
-  <MetadataFloat name="eulerAxis" value="1 0 0" containerField="references"/>
-  <MetadataFloat name="eulerLimits" value="-1 1" containerField="references"/>
-  <MetadataFloat name="eulerAxis" value="0 1 0" containerField="references"/>
-</PythonScript>-->
+      <ROUTE fromNode='SEAT' fromField='isTouched' toNode='MFtoSFBool3' toField='value' />
+      <ROUTE fromNode='MFtoSFBool3' fromField='value' toNode='BF2' toField='set_boolean' />
+      <ROUTE fromNode='BF2' fromField='inputTrue' toNode='TT2' toField='set_boolean' />
+      <ROUTE fromNode='TT2' fromField='triggerTime' toNode='SOUND2' toField='startTime' />
 
     </Group>  
 </Group>
