@@ -6,26 +6,39 @@ function labcode(data, x_var, y_var, sp_svg, tooltip) {
   /** COMPUTER EXERCISE STARTS HERE  */
   //Task 5.1.1  -- Create the x-axis
   var x = d3.scaleLinear().domain([
-      d3.min(data, function(d){return +d[x_var];}),
-      d3.max(data, function(d){return +d[x_var];})
-        ]).range([0, width]);
+    d3.min(data, function(d){return +d[x_var];}),
+    d3.max(data, function(d){return +d[x_var];})
+  ]).range([0, width]);
   
 
   //Task 5.1.2  -- Append the axes to the svg
-  var xAxis;
+  var xAxis = sp_svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
 
 
   //Task 5.1.3  -- Create y-axis
-  var y;
+  var y = d3.scaleLinear().domain([
+    d3.min(data, function(d){return +d[y_var];}),
+    d3.max(data, function(d){return +d[y_var];})
+  ]).range([height, 0]);
 
 
   // Task 5.1.4 -- Append the axis to svg
-  var yAxis;
+  var yAxis = sp_svg.append("g")
+    .call(d3.axisLeft(y));
   
 
   // Task 5.1.5 -- Append circles to svg
-  var myCircles;
-
+  var myCircles = sp_svg.append('g')
+    .selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+      .attr("cx", function (d) { return +x(d[x_var]); } )
+      .attr("cy", function (d) { return +y(d[y_var]); } )
+      .attr("r", 6)
+      .style("fill", "darkturquoise").style("opacity", 0.3)
 
   // Task 5.1.6 -- Append circles to svg
 
