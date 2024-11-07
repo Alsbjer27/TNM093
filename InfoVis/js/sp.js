@@ -44,7 +44,7 @@ function labcode(data, x_var, y_var, sp_svg, tooltip) {
 
 
   // Task 5.1.7 -- Adding hovering
-
+  hovering(myCircles, tooltip);
 
   return [x, xAxis, y, yAxis, myCircles];
 }
