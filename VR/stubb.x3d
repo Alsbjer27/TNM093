@@ -137,6 +137,30 @@ and load libraries commonly used in the VR laboratory.
               <Box DEF="REST" size="0.1 0.05 0.01"/>
           </Shape>
       </Transform>
+
+<!--Sphere-->
+      <Transform translation="0.2 0.03 0.2">
+        <Shape>
+          <Appearance shadow ="true">
+            <FrictionalSurface USE="FRICSURF"/>
+            <Material DEF="MAT3" diffuseColor="0.5 0 0.5"/>
+            <SmoothSurface stiffness="0.4"/>
+          </Appearance>
+          <Sphere DEF="GLOBE" radius="0.1" solid="true"/>
+        </Shape>
+      </Transform>
+
+<!--Capsule-->
+      <Transform translation="-0.2 0.03 0.2">
+        <Shape>
+          <Appearance shadow ="true">
+            <FrictionalSurface USE="FRICSURF"/>
+            <Material DEF="MAT4" diffuseColor="0.95 0.90 0.2"/>
+            <!--<MagneticSurface stiffness="0.4" damping="0.3" dynamicFriction="0.6" snapDistance="0.02"/>-->
+          </Appearance>
+          <Capsule radius="0.05" height="0.04"/>
+        </Shape>
+      </Transform>
     </MatrixTransform>
 
   <!-- Floor -->
