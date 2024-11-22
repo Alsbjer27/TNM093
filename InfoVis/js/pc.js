@@ -61,14 +61,15 @@ function pc(data) {
 		.attr("transform", function (d) { return "translate(" + x(d) + ")"; })
 		.each(function (d) { d3.select(this).call(yAxis.scale(y[d]))});
 
-
-	axes.append("text") // 5.2.3 -- Drawing the Axes Labels
+	// 5.2.3 -- Drawing the Axes Labels
+	axes.append("text") 
 		.attr("text-anchor", "middle")
 		.attr("y", -9)
 		.style("fill","black")
 		.each(function (d) { d3.select(this).text(d); });
 
-	axes.append("g") // 5.2.4 -- Interaction, brushing the axes
+	// 5.2.4 -- Interaction, brushing the axes
+	axes.append("g") 
 		.attr("class", "brush")
 		.each(function (d) {d3.select(this).call(perAxisBrush(d));})
 		.selectAll("rect")
