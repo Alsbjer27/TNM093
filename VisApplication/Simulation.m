@@ -7,7 +7,7 @@
 % Given these parameters from the LAB_PM
 m = 0.2;          % Mass 
 k = 20;           % Spring stiffness
-b = 0.6;          % Damping coefficient
+b = 0.2;          % Damping coefficient
 L0 = 1;           % Rest length of the spring
 
 % Loop intervall
@@ -87,7 +87,6 @@ for n = 1:length(t)-1
     pause(0.01); % Pause for a short duration to control animation speed
 end
 
-% Final static plot (optional)
 figure;
 plot(t, r1_array, 'r', 'LineWidth', 2); hold on;
 plot(t, r2_array, 'b', 'LineWidth', 2);
