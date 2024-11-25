@@ -22,7 +22,7 @@ let rows = parseInt(document.getElementById("rows").value, 10);
 let cols = parseInt(document.getElementById("cols").value, 10);
 let restoreForce = parseFloat(document.getElementById("restore-force").value);
 let damping = parseFloat(document.getElementById("damping").value);
-const nodeRadius = 5;
+const nodeRadius = 10;
 const timeStep = 0.016;
 const padding = 50;
 
