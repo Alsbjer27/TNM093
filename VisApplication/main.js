@@ -30,6 +30,8 @@ const padding = 50;
 let positions = [];
 let velocities = [];
 let forces = [];
+let masses = [];
+let selectedNode = null;
 let isRunning = false;
 
 /**
@@ -40,6 +42,7 @@ function initializeGrid() {
     previousPositions = [];
     velocities = [];
     forces = [];
+    masses = [];
     const xStep = (width - 2 * padding) / (cols - 1);
     const yStep = (height - 2 * padding) / (rows - 1);
 
@@ -48,6 +51,7 @@ function initializeGrid() {
         const prevPositionsRow = [];
         const velocityRow = [];
         const forceRow = [];
+        const massRow = []; 
         for (let j = 0; j < cols; j++) {
             const x = padding + j * xStep;
             const y = padding + i * yStep;
@@ -55,11 +59,13 @@ function initializeGrid() {
             prevPositionsRow.push([x, y]); // Initial position
             velocityRow.push([0, 0]); // Initial velocity
             forceRow.push([0, 0]); // Initial force
+            massRow.push(1); // Mass
         }
         positions.push(positionRow);
         previousPositions.push(prevPositionsRow);
         velocities.push(velocityRow);
         forces.push(forceRow);
+        masses.push(massRow);
     }
     drawNodes();
     drawEdges();
@@ -69,24 +75,31 @@ function initializeGrid() {
  * Draw the nodes (circles) on the SVG.
  */
 function drawNodes() {
-    // Example of how to draw nodes on the svg
     const nodes = svg.selectAll("circle").data(positions.flat());
+
     nodes
         .enter()
         .append("circle")
         .attr("r", nodeRadius)
         .merge(nodes)
-        .attr("cx", (d) => d[0]) // X-coordinate
-        .attr("cy", (d) => d[1]) // Y-coordinate
-        .attr("fill", "blue")
+        .attr("cx", (d) => d[0]) // X-koordinat
+        .attr("cy", (d) => d[1]) // Y-koordinat
+        .attr("fill", (d) =>
+            selectedNode && d === selectedNode ? "red" : "blue" // Markera vald nod
+        )
         .attr("stroke", "white")
         .attr("stroke-width", 2)
         .call(
             d3.drag()
-                .on("start", dragStarted) // Pass the function reference
-                .on("drag", dragged)      // Pass the function reference
-                .on("end", dragEnded)     // Pass the function reference
-        );
+                .on("start", dragStarted)
+                .on("drag", dragged)
+                .on("end", dragEnded)
+        )
+        .on("click", (event, d) => {
+            // Markera den valda noden
+            selectedNode = d;
+            drawNodes(); // Uppdatera färger
+        });
 
     nodes.exit().remove();
 }
@@ -143,16 +156,17 @@ function dragEnded(event, d) {
 }
 
 
-function getNodeIndex(position){
-    for(let i = 0; i < rows; i++){
-        for(let j = 0; j < cols; j++){
-            if(positions[i][j][0] === position[0] && positions[i][j][1] === position[1]){
-                return [i,j];
+function getNodeIndex(node) {
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            if (positions[i][j] === node) {
+                return [i, j];
             }
         }
     }
     return null;
 }
+
 
 
 /**
@@ -196,16 +210,16 @@ for(let i = 0; i < rows; i++) {
  * This function is a placeholder for students to implement force calculations.
  */
 function calculateForces() {
-    // Reset forces
+    // Nollställ krafter
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
-            forces[i][j] = [0, 0]; // Reset forces
+            forces[i][j] = [0, 0];
         }
     }
 
-    // Structural and diagonal connections
+    // Beräkna krafter mellan grannar
     const neighbors = [
-        [0, 1], [1, 0], [1, 1], [1, -1], // Right, Down, Diagonal (SE, SW)
+        [0, 1], [1, 0], [1, 1], [1, -1], // Rätt, Nedåt, Diagonal (SE, SW)
     ];
 
     for (let i = 0; i < rows; i++) {
@@ -217,32 +231,35 @@ function calculateForces() {
                     const deltaX = positions[ni][nj][0] - positions[i][j][0];
                     const deltaY = positions[ni][nj][1] - positions[i][j][1];
                     const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-                    const restLength = di === 0 || dj === 0 ? (width - 2 * padding) / (cols - 1) : Math.sqrt(2) * (width - 2 * padding) / (cols - 1);
+                    const restLength = (di === 0 || dj === 0) 
+                        ? (width - 2 * padding) / (cols - 1) 
+                        : Math.sqrt(2) * (width - 2 * padding) / (cols - 1);
 
-                    // Restoring force (spring force)
+                    // Beräkna fjäderkraft
                     const springForceMagnitude = restoreForce * (distance - restLength);
                     const springForceX = springForceMagnitude * (deltaX / distance);
                     const springForceY = springForceMagnitude * (deltaY / distance);
 
-                    // Damping force
-                    const velocityX = (positions[i][j][0] - previousPositions[i][j][0]) / timeStep;
-                    const velocityY = (positions[i][j][1] - previousPositions[i][j][1]) / timeStep;
-                    const neighborVelocityX = (positions[ni][nj][0] - previousPositions[ni][nj][0]) / timeStep;
-                    const neighborVelocityY = (positions[ni][nj][1] - previousPositions[ni][nj][1]) / timeStep;
-                    const dampingForceX = -damping * (velocityX - neighborVelocityX);
-                    const dampingForceY = -damping * (velocityY - neighborVelocityY);
+                    forces[i][j][0] += springForceX;
+                    forces[i][j][1] += springForceY;
 
-                    // Combine forces
-                    forces[i][j][0] += springForceX + dampingForceX;
-                    forces[i][j][1] += springForceY + dampingForceY;
-
-                    forces[ni][nj][0] -= springForceX + dampingForceX;
-                    forces[ni][nj][1] -= springForceY + dampingForceY;
+                    // Motsatt kraft på grannen
+                    forces[ni][nj][0] -= springForceX;
+                    forces[ni][nj][1] -= springForceY;
                 }
             }
         }
     }
+
+    // Normalisera krafter med massan
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            forces[i][j][0] /= masses[i][j];
+            forces[i][j][1] /= masses[i][j];
+        }
+    }
 }
+
 
 let integrationMethod = "verlet";
 
@@ -373,6 +390,21 @@ document.getElementById("damping").addEventListener("input", (e) => {
 document.getElementById("integration-method").addEventListener("change", (e) => {
     integrationMethod = e.target.value;
 });
+
+document.getElementById("set-mass").addEventListener("click", () => {
+    if (selectedNode) {
+        const massInput = parseFloat(document.getElementById("mass-input").value);
+        const nodeIndex = getNodeIndex(selectedNode);
+        if (nodeIndex) {
+            const [i, j] = nodeIndex;
+            masses[i][j] = massInput;
+        }
+    } else {
+        alert("Välj en nod först!");
+    }
+});
+
+
 
 // Initialize the simulation
 initializeGrid();
