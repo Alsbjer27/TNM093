@@ -244,8 +244,17 @@ function calculateForces() {
     }
 }
 
+let integrationMethod = "verlet";
 
 function updatePositions() {
+    if (integrationMethod === "verlet") {
+        updatePositionsVerlet();
+    } else if (integrationMethod === "euler") {
+        updatePositionsEuler();
+    }
+}
+
+function updatePositionsVerlet() {
     calculateForces();
 
     const maxVelocity = 10; // Begränsa maximal hastighet
@@ -291,6 +300,29 @@ function updatePositions() {
     drawEdges();
 }
 
+function updatePositionsEuler(){
+    calculateForces();
+
+    for(let i = 0; i < rows; i++){
+        for(let j = 0; j < cols; j++){
+            const currentPos = positions[i][j];
+            const velocity = velocities[i][j];
+
+            const acceleration = [
+                forces[i][j][0],
+                forces[i][j][1],
+            ];
+
+            velocity[0] += timeStep * acceleration[0];
+            velocity[1] += timeStep * acceleration[1];
+
+            currentPos[0] += timeStep * velocity[0];
+            currentPos[1] += timeStep * velocity[1];
+        }
+    }
+    drawNodes();
+    drawEdges();
+}
 
 
 /**
@@ -304,7 +336,6 @@ function simulationLoop() {
     updatePositions();
     requestAnimationFrame(simulationLoop);
 }
-
 
 // ********** Event listeners examples for controls **********
 
@@ -337,6 +368,10 @@ document.getElementById("restore-force").addEventListener("input", (e) => {
 document.getElementById("damping").addEventListener("input", (e) => {
     damping = parseFloat(e.target.value);
     document.getElementById("damping-value").textContent = damping.toFixed(2);
+});
+
+document.getElementById("integration-method").addEventListener("change", (e) => {
+    integrationMethod = e.target.value;
 });
 
 // Initialize the simulation
