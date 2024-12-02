@@ -80,14 +80,13 @@ function drawNodes() {
         .attr("cy", (d) => d[1]) // Y-coordinate
         .attr("fill", "blue")
         .attr("stroke", "white")
-        .attr("stroke-width", 2);
-
-        nodes.call(
-                    d3.drag()
-                        .on("start", dragStarted) // Pass the function reference
-                        .on("drag", dragged)      // Pass the function reference
-                        .on("end", dragEnded)     // Pass the function reference
-        )
+        .attr("stroke-width", 2)
+        .call(
+            d3.drag()
+                .on("start", dragStarted) // Pass the function reference
+                .on("drag", dragged)      // Pass the function reference
+                .on("end", dragEnded)     // Pass the function reference
+        );
 
     nodes.exit().remove();
 }
@@ -95,6 +94,12 @@ function drawNodes() {
 
 function dragStarted(event, d){
     d3.select(this).attr("fill", "red");
+    const nodeIndex = getNodeIndex(d);
+    if(nodeIndex){
+        simulation.alphaTarget(0.3).restart();
+        positions[nodeIndex[0]][nodeIndex[1]].fx = event.x;
+        positions[nodeIndex[0]][nodeIndex[1]].fy = event.y;
+    }
 }
 
 function dragged(event, d){
@@ -103,26 +108,40 @@ function dragged(event, d){
         const[i, j] = nodeIndex;
         positions[i][j][0] = event.x;
         positions[i][j][1] = event.y;
+
+        d3.select(this)
+            .attr("cx", event.x)
+            .attr("cy", event.y);
+
+            drawEdges();
     }
-
-    drawEdges();
-
-    d3.select(this)
-        .attr("cx", event.x)
-        .attr("cy", event.y);
 }
 
-function dragEnded(event, d){
+function dragEnded(event, d) {
     d3.select(this).attr("fill", "blue");
 
     const nodeIndex = getNodeIndex(d);
-    if(nodeIndex){
-        const[i,j] = nodeIndex;
-        const kickForce = [event.dx * 10, event.dy * 10];
-        forces[i][j][0] += kickForce[0];
-        forces[i][j][1] += kickForce[1];
+    if (nodeIndex) {
+        const [i, j] = nodeIndex;
+
+        // Sätt nodens position till "fixerad" tillfälligt
+        positions[i][j].fx = positions[i][j][0];
+        positions[i][j].fy = positions[i][j][1];
+
+        // Gradvis släpp positionen tillbaka till simuleringen
+        setTimeout(() => {
+            positions[i][j].fx = null;
+            positions[i][j].fy = null;
+        }, 500); // Släpp efter 500 ms (justera efter behov)
+
+        // Nollställ hastighet för att undvika acceleration
+        velocities[i][j] = [0, 0];
+
+        // Rensa eventuella kickkrafter
+        forces[i][j] = [0, 0];
     }
 }
+
 
 function getNodeIndex(position){
     for(let i = 0; i < rows; i++){
@@ -229,22 +248,40 @@ function calculateForces() {
 function updatePositions() {
     calculateForces();
 
+    const maxVelocity = 10; // Begränsa maximal hastighet
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             const currentPos = positions[i][j];
             const prevPos = previousPositions[i][j];
             const acceleration = [
-                forces[i][j][0], // Force in X-direction
-                forces[i][j][1], // Force in Y-direction
+                forces[i][j][0], // Kraft i X-riktning
+                forces[i][j][1], // Kraft i Y-riktning
             ];
 
             // Verlet position update
-            const nextPos = [
+            let nextPos = [
                 2 * currentPos[0] - prevPos[0] + timeStep ** 2 * acceleration[0],
                 2 * currentPos[1] - prevPos[1] + timeStep ** 2 * acceleration[1],
             ];
 
-            // Update previous and current positions
+            // Begränsa hastighet
+            const velocityX = nextPos[0] - currentPos[0];
+            const velocityY = nextPos[1] - currentPos[1];
+            const speed = Math.sqrt(velocityX ** 2 + velocityY ** 2);
+
+            if (speed > maxVelocity) {
+                const scale = maxVelocity / speed;
+                nextPos[0] = currentPos[0] + velocityX * scale;
+                nextPos[1] = currentPos[1] + velocityY * scale;
+            }
+
+            // Om noden är fixerad, använd fixerade positioner
+            if (currentPos.fx != null && currentPos.fy != null) {
+                nextPos[0] = currentPos.fx;
+                nextPos[1] = currentPos.fy;
+            }
+
+            // Uppdatera tidigare och nuvarande positioner
             previousPositions[i][j] = [...currentPos];
             positions[i][j] = [...nextPos];
         }
@@ -253,6 +290,7 @@ function updatePositions() {
     drawNodes();
     drawEdges();
 }
+
 
 
 /**
