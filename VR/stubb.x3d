@@ -63,7 +63,7 @@ and load libraries commonly used in the VR laboratory.
       <Inline url="urn:candy:x3d/view-untracked-mono.x3d"/>
       <Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
       -->
-<Inline url="urn:candy:x3d/view-head-tracked-mono.x3d"/>
+<Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
 <IMPORT inlineDEF="H3D_EXPORTS" exportedDEF="HDEV" AS="HDEV"/>
 
 <!-- Light above-->
@@ -76,7 +76,7 @@ and load libraries commonly used in the VR laboratory.
       <Transform translation="-0.05 -0.1 0.1" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
-              <FrictionalSurface DEF="FRICSURF" useRealtiveValues="false" stiffness="1200" damping="2" dynamicFriction="0.3"/>
+              <FrictionalSurface DEF="FRICSURF" useRelativeValues="false" stiffness="200" damping="2" dynamicFriction="0.3"/>
               <Material DEF="MAT1" diffuseColor="0 1 0"/>
             </Appearance>
             <Box size="0.01 0.1 0.01"/>
@@ -87,7 +87,7 @@ and load libraries commonly used in the VR laboratory.
       <Transform translation="0.05 -0.1 0.1" rotation="0 0 1 0">
         <Shape>
             <Appearance shadow="true">
-              <FrictionalSurface DEF="FRICSURF2" useRealtiveValues="false" stiffness="1200" damping="2" dynamicFriction="0.8"/>
+              <FrictionalSurface DEF="FRICSURF2" useRelativeValues="false" stiffness="800" damping="2" dynamicFriction="0.3"/>
               <Material DEF="MAT1" diffuseColor="0 1 0" />
             </Appearance>
             <Box size="0.01 0.1 0.01"/>
@@ -139,24 +139,24 @@ and load libraries commonly used in the VR laboratory.
       </Transform>
 
 <!--Sphere-->
-      <Transform translation="0.2 0.03 0.2">
+      <Transform translation="0.1 0.02 0.0">
         <Shape>
           <Appearance shadow ="true">
             <FrictionalSurface USE="FRICSURF"/>
             <Material DEF="MAT3" diffuseColor="0.5 0 0.5"/>
             <SmoothSurface stiffness="0.4"/>
           </Appearance>
-          <Sphere DEF="GLOBE" radius="0.1" solid="true"/>
+          <Sphere DEF="GLOBE" radius="0.05" solid="true"/>
         </Shape>
       </Transform>
 
 <!--Capsule-->
-      <Transform translation="-0.2 0.03 0.2">
+      <Transform translation="-0.1 0.03 0.05">
         <Shape>
           <Appearance shadow ="true">
             <FrictionalSurface USE="FRICSURF"/>
             <Material DEF="MAT4" diffuseColor="0.95 0.90 0.2"/>
-            <!--<MagneticSurface stiffness="0.4" damping="0.3" dynamicFriction="0.6" snapDistance="0.02"/>-->
+            <MagneticSurface stiffness="0.4" damping="0.3" dynamicFriction="0.6" snapDistance="0.2"/>
           </Appearance>
           <Capsule radius="0.05" height="0.04"/>
         </Shape>
