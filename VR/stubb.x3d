@@ -26,7 +26,7 @@ and load libraries commonly used in the VR laboratory.
   <!--<Inline url="urn:candy:x3d/model_FeedbackTip.x3d"/>-->
 
 
- <!-- <PythonScript DEF="TTTSCRIPT" url="urn:candy:python/TouchTimeTrigger.py"/> -->
+  <!--<PythonScript DEF="TTTSCRIPT" url="urn:candy:python/TouchTimeTrigger.py"/>-->
 
   <!-- Put your code here -->
     <Group>
@@ -43,7 +43,7 @@ and load libraries commonly used in the VR laboratory.
 
 <!-- SOUND 2-->
 <VRSound location="-1 1 0" spatialize="TRUE">
-<ReverbSoundEffect parametersPreset="MOOD_HELL" />
+<ReverbSoundEffect parametersPreset="MOOD_HELL" diffusion="0.5" decayTime="15" gain="15"/>
 <AudioClip DEF="SOUND2" url="./sound/ljud-bonk-1.wav" loop="false"/>
 </VRSound>
 
@@ -58,13 +58,14 @@ and load libraries commonly used in the VR laboratory.
 <TimeTrigger DEF="TT"/>
 <TimeTrigger DEF="TT2"/>
 
-      <!-- For VR Experiments -->
-      <!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
-      <Inline url="urn:candy:x3d/view-untracked-mono.x3d"/>
-      <Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
-      -->
-<Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
-<IMPORT inlineDEF="H3D_EXPORTS" exportedDEF="HDEV" AS="HDEV"/>
+<!-- For VR Experiments -->
+<!--<Inline url="urn:candy:x3d/view-untracked-stereo.x3d"/>
+<Inline url="urn:candy:x3d/view-untracked-mono.x3d"/>
+<Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>-->
+
+<!--<Inline url="urn:candy:x3d/view-head-tracked-stereo.x3d"/>
+
+<IMPORT inlineDEF="H3D_EXPORTS" exportedDEF="HDEV" AS="HDEV"/>-->
 
 <!-- Light above-->
 <PointLight location="0.3 0.5 0.5" ambientIntensity="0.5"/>
@@ -120,8 +121,8 @@ and load libraries commonly used in the VR laboratory.
       <Transform translation="0 -0.05 0.05" rotation="0 0 1 0">
           <Shape>
             <Appearance shadow="true">
-              <FrictionalSurface USE="FRICSURF"/>
-              <Material USE="MAT1"/>
+            <FrictionalSurface USE="FRICSURF"/>
+            <Material USE="MAT1"/>
             </Appearance>
               <Box DEF="SEAT" size="0.12 -0.015 0.12"/>
           </Shape>
@@ -132,7 +133,7 @@ and load libraries commonly used in the VR laboratory.
           <Shape>
             <Appearance shadow="true">
               <Material DEF="MAT2" diffuseColor="1 0 0"/>
-              <SmoothSurface stiffness="0.4"/>
+              <SmoothSurface stiffness="0.4" damping="0.5" />
             </Appearance>
               <Box DEF="REST" size="0.1 0.05 0.01"/>
           </Shape>
@@ -156,6 +157,7 @@ and load libraries commonly used in the VR laboratory.
           <Appearance shadow ="true">
             <FrictionalSurface USE="FRICSURF"/>
             <Material DEF="MAT4" diffuseColor="0.95 0.90 0.2"/>
+            
           </Appearance>
           <Capsule radius="0.05" height="0.04"/>
         </Shape>
@@ -200,7 +202,7 @@ and load libraries commonly used in the VR laboratory.
       <ROUTE fromNode='BF' fromField='inputTrue' toNode='TT' toField='set_boolean' />
       <ROUTE fromNode='TT' fromField='triggerTime' toNode='SOUND' toField='startTime' />
 
-      <ROUTE fromNode='SEAT' fromField='isTouched' toNode='MFtoSFBool3' toField='value' />
+      <ROUTE fromNode='GLOBE' fromField='isTouched' toNode='MFtoSFBool3' toField='value' />
       <ROUTE fromNode='MFtoSFBool3' fromField='value' toNode='BF2' toField='set_boolean' />
       <ROUTE fromNode='BF2' fromField='inputTrue' toNode='TT2' toField='set_boolean' />
       <ROUTE fromNode='TT2' fromField='triggerTime' toNode='SOUND2' toField='startTime' />
