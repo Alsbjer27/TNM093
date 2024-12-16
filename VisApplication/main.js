@@ -274,7 +274,7 @@ function updatePositions() {
 function updatePositionsVerlet() {
     calculateForces();
 
-    const maxVelocity = 10; // Begränsa maximal hastighet
+    const maxVelocity = 11; // Begränsa maximal hastighet
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             const currentPos = positions[i][j];

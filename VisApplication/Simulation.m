@@ -98,109 +98,109 @@ grid on;
 
 %% 3. MATLAB Implementation of Four Masses
 
-% Parameters
-m = 0.2;          % Mass (kg)
-k_struct = 15;    % Structural spring stiffness (N/m)
-k_shear = 5;      % Shear spring stiffness (N/m)
-b_struct = 0.5;  % Structural damping coefficient (N·s/m)
-b_shear = 0.2;   % Shear damping coefficient (N·s/m)
-L0_struct = 1;    % Structural spring rest length (m)
-L0_shear = sqrt(2); % Shear spring rest length (m)
-h = 0.001;        % Time step (s) - Reduced for stability
-tf = 5;           % Total simulation time (s)
-
-% Initial positions (2x2 grid)
-r = [0, 0; 1.0005, 0; 0, 1.0005; 1.0005, 1.0005]; % Masses 1-4
-v = zeros(4, 2);              % Velocities
-
-% Time vector
-t = 0:h:tf;
-
-% Arrays to store positions over time
-r_history = zeros(length(t), 4, 2);
-r_history(1, :, :) = r;
-
-% Structural spring connections
-connections_struct = [1, 2; 1, 3; 2, 4; 3, 4];
-% Shear spring connections
-connections_shear = [1, 4; 2, 3];
-
-% Simulation loop
-for n = 1:length(t)-1
-    % Initialize forces on each mass
-    F = zeros(4, 2);
-    
-    % Structural springs
-    for c = 1:size(connections_struct, 1)
-        i = connections_struct(c, 1);
-        j = connections_struct(c, 2);
-        delta_r = r(j, :) - r(i, :);
-        L = norm(delta_r);
-        dir = delta_r / L;
-        Fs = -k_struct * (L - L0_struct) * dir;
-        Fb = -b_struct * (v(j, :) - v(i, :));
-        F(i, :) = F(i, :) + Fs + Fb;
-        F(j, :) = F(j, :) - Fs - Fb;
-    end
-    
-    % Shear springs
-    for c = 1:size(connections_shear, 1)
-        i = connections_shear(c, 1);
-        j = connections_shear(c, 2);
-        delta_r = r(j, :) - r(i, :);
-        L = norm(delta_r);
-        dir = delta_r / L;
-        Fs = -k_shear * (L - L0_shear) * dir;
-        Fb = -b_shear * (v(j, :) - v(i, :));
-        F(i, :) = F(i, :) + Fs + Fb;
-        F(j, :) = F(j, :) - Fs - Fb;
-    end
-  
-
-    % Update velocities and positions (Euler Method)
-    a = F / m;
-    v = v + h * a;
-    r = r + h * v;
-    
-    % Store positions
-    r_history(n+1, :, :) = r;
-end
-
-% Animation
-figure;
-hold on;
-grid on;
-xlim([-1, 2]); ylim([-1, 2]);
-xlabel('X Position'); ylabel('Y Position');
-title('Motion of 4 Masses Connected by Springs');
-masses = scatter(r(:, 1), r(:, 2), 100, 'filled'); % Masses
-springs = gobjects(6, 1); % 4 structural + 2 shear springs
-
-% Initial spring lines
-springs(1) = plot([r(1, 1), r(2, 1)], [r(1, 2), r(2, 2)], 'k'); % Mass 1-2
-springs(2) = plot([r(1, 1), r(3, 1)], [r(1, 2), r(3, 2)], 'k'); % Mass 1-3
-springs(3) = plot([r(2, 1), r(4, 1)], [r(2, 2), r(4, 2)], 'k'); % Mass 2-4
-springs(4) = plot([r(3, 1), r(4, 1)], [r(3, 2), r(4, 2)], 'k'); % Mass 3-4
-springs(5) = plot([r(1, 1), r(4, 1)], [r(1, 2), r(4, 2)], 'b'); % Shear 1-4
-springs(6) = plot([r(2, 1), r(3, 1)], [r(2, 2), r(3, 2)], 'b'); % Shear 2-3
-
-for n = 1:length(t)
-    % Update positions in animation
-    set(masses, 'XData', r_history(n, :, 1), 'YData', r_history(n, :, 2));
-    set(springs(1), 'XData', [r_history(n, 1, 1), r_history(n, 2, 1)], ...
-                    'YData', [r_history(n, 1, 2), r_history(n, 2, 2)]);
-    set(springs(2), 'XData', [r_history(n, 1, 1), r_history(n, 3, 1)], ...
-                    'YData', [r_history(n, 1, 2), r_history(n, 3, 2)]);
-    set(springs(3), 'XData', [r_history(n, 2, 1), r_history(n, 4, 1)], ...
-                    'YData', [r_history(n, 2, 2), r_history(n, 4, 2)]);
-    set(springs(4), 'XData', [r_history(n, 3, 1), r_history(n, 4, 1)], ...
-                    'YData', [r_history(n, 3, 2), r_history(n, 4, 2)]);
-    set(springs(5), 'XData', [r_history(n, 1, 1), r_history(n, 4, 1)], ...
-                    'YData', [r_history(n, 1, 2), r_history(n, 4, 2)]);
-    set(springs(6), 'XData', [r_history(n, 2, 1), r_history(n, 3, 1)], ...
-                    'YData', [r_history(n, 2, 2), r_history(n, 3, 2)]);
-    pause(0.01);
-end
+% % Parameters
+% m = 0.2;          % Mass (kg)
+% k_struct = 15;    % Structural spring stiffness (N/m)
+% k_shear = 5;      % Shear spring stiffness (N/m)
+% b_struct = 0.5;  % Structural damping coefficient (N·s/m)
+% b_shear = 0.2;   % Shear damping coefficient (N·s/m)
+% L0_struct = 1;    % Structural spring rest length (m)
+% L0_shear = sqrt(2); % Shear spring rest length (m)
+% h = 0.001;        % Time step (s) - Reduced for stability
+% tf = 5;           % Total simulation time (s)
+% 
+% % Initial positions (2x2 grid)
+% r = [0, 0; 1.0005, 0; 0, 1.0005; 1.0005, 1.0005]; % Masses 1-4
+% v = zeros(4, 2);              % Velocities
+% 
+% % Time vector
+% t = 0:h:tf;
+% 
+% % Arrays to store positions over time
+% r_history = zeros(length(t), 4, 2);
+% r_history(1, :, :) = r;
+% 
+% % Structural spring connections
+% connections_struct = [1, 2; 1, 3; 2, 4; 3, 4];
+% % Shear spring connections
+% connections_shear = [1, 4; 2, 3];
+% 
+% % Simulation loop
+% for n = 1:length(t)-1
+%     % Initialize forces on each mass
+%     F = zeros(4, 2);
+%     
+%     % Structural springs
+%     for c = 1:size(connections_struct, 1)
+%         i = connections_struct(c, 1);
+%         j = connections_struct(c, 2);
+%         delta_r = r(j, :) - r(i, :);
+%         L = norm(delta_r);
+%         dir = delta_r / L;
+%         Fs = -k_struct * (L - L0_struct) * dir;
+%         Fb = -b_struct * (v(j, :) - v(i, :));
+%         F(i, :) = F(i, :) + Fs + Fb;
+%         F(j, :) = F(j, :) - Fs - Fb;
+%     end
+%     
+%     % Shear springs
+%     for c = 1:size(connections_shear, 1)
+%         i = connections_shear(c, 1);
+%         j = connections_shear(c, 2);
+%         delta_r = r(j, :) - r(i, :);
+%         L = norm(delta_r);
+%         dir = delta_r / L;
+%         Fs = -k_shear * (L - L0_shear) * dir;
+%         Fb = -b_shear * (v(j, :) - v(i, :));
+%         F(i, :) = F(i, :) + Fs + Fb;
+%         F(j, :) = F(j, :) - Fs - Fb;
+%     end
+%   
+% 
+%     % Update velocities and positions (Euler Method)
+%     a = F / m;
+%     v = v + h * a;
+%     r = r + h * v;
+%     
+%     % Store positions
+%     r_history(n+1, :, :) = r;
+% end
+% 
+% % Animation
+% figure;
+% hold on;
+% grid on;
+% xlim([-1, 2]); ylim([-1, 2]);
+% xlabel('X Position'); ylabel('Y Position');
+% title('Motion of 4 Masses Connected by Springs');
+% masses = scatter(r(:, 1), r(:, 2), 100, 'filled'); % Masses
+% springs = gobjects(6, 1); % 4 structural + 2 shear springs
+% 
+% % Initial spring lines
+% springs(1) = plot([r(1, 1), r(2, 1)], [r(1, 2), r(2, 2)], 'k'); % Mass 1-2
+% springs(2) = plot([r(1, 1), r(3, 1)], [r(1, 2), r(3, 2)], 'k'); % Mass 1-3
+% springs(3) = plot([r(2, 1), r(4, 1)], [r(2, 2), r(4, 2)], 'k'); % Mass 2-4
+% springs(4) = plot([r(3, 1), r(4, 1)], [r(3, 2), r(4, 2)], 'k'); % Mass 3-4
+% springs(5) = plot([r(1, 1), r(4, 1)], [r(1, 2), r(4, 2)], 'b'); % Shear 1-4
+% springs(6) = plot([r(2, 1), r(3, 1)], [r(2, 2), r(3, 2)], 'b'); % Shear 2-3
+% 
+% for n = 1:length(t)
+%     % Update positions in animation
+%     set(masses, 'XData', r_history(n, :, 1), 'YData', r_history(n, :, 2));
+%     set(springs(1), 'XData', [r_history(n, 1, 1), r_history(n, 2, 1)], ...
+%                     'YData', [r_history(n, 1, 2), r_history(n, 2, 2)]);
+%     set(springs(2), 'XData', [r_history(n, 1, 1), r_history(n, 3, 1)], ...
+%                     'YData', [r_history(n, 1, 2), r_history(n, 3, 2)]);
+%     set(springs(3), 'XData', [r_history(n, 2, 1), r_history(n, 4, 1)], ...
+%                     'YData', [r_history(n, 2, 2), r_history(n, 4, 2)]);
+%     set(springs(4), 'XData', [r_history(n, 3, 1), r_history(n, 4, 1)], ...
+%                     'YData', [r_history(n, 3, 2), r_history(n, 4, 2)]);
+%     set(springs(5), 'XData', [r_history(n, 1, 1), r_history(n, 4, 1)], ...
+%                     'YData', [r_history(n, 1, 2), r_history(n, 4, 2)]);
+%     set(springs(6), 'XData', [r_history(n, 2, 1), r_history(n, 3, 1)], ...
+%                     'YData', [r_history(n, 2, 2), r_history(n, 3, 2)]);
+%     pause(0.01);
+% end
 
 
 

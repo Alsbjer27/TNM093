@@ -156,7 +156,6 @@ and load libraries commonly used in the VR laboratory.
           <Appearance shadow ="true">
             <FrictionalSurface USE="FRICSURF"/>
             <Material DEF="MAT4" diffuseColor="0.95 0.90 0.2"/>
-            <MagneticSurface stiffness="0.4" damping="0.3" dynamicFriction="0.6" snapDistance="0.2"/>
           </Appearance>
           <Capsule radius="0.05" height="0.04"/>
         </Shape>
